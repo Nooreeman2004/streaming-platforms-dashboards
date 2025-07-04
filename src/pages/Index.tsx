@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import NetflixDashboard from '@/components/dashboards/NetflixDashboard';
 import AmazonDashboard from '@/components/dashboards/AmazonDashboard';
@@ -21,17 +20,27 @@ const Index = () => {
   ];
 
   const renderDashboard = () => {
-    switch (selectedPlatform) {
-      case 'netflix':
-        return <NetflixDashboard />;
-      case 'amazon':
-        return <AmazonDashboard />;
-      case 'disney':
-        return <DisneyDashboard />;
-      case 'comparison':
-        return <ComparisonDashboard />;
-      default:
-        return <NetflixDashboard />;
+    try {
+      switch (selectedPlatform) {
+        case 'netflix':
+          return <NetflixDashboard />;
+        case 'amazon':
+          return <AmazonDashboard />;
+        case 'disney':
+          return <DisneyDashboard />;
+        case 'comparison':
+          return <ComparisonDashboard />;
+        default:
+          return <NetflixDashboard />;
+      }
+    } catch (error) {
+      console.error('Error rendering dashboard:', error);
+      return (
+        <div className="text-white text-center py-20">
+          <h2 className="text-2xl mb-4">Error loading dashboard</h2>
+          <p className="text-gray-400">Please try refreshing the page</p>
+        </div>
+      );
     }
   };
 
