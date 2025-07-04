@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,15 +10,22 @@ import { Film, Tv, ZoomIn, ZoomOut, Filter } from 'lucide-react';
 const NetflixDashboard = () => {
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
+  const [selectedType, setSelectedType] = useState('All');
   const [selectedShow, setSelectedShow] = useState(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  
+  // Individual zoom states for each chart
+  const [genreZoom, setGenreZoom] = useState(1);
+  const [yearlyZoom, setYearlyZoom] = useState(1);
+  const [ratingZoom, setRatingZoom] = useState(1);
+  const [qualityZoom, setQualityZoom] = useState(1);
+  const [durationZoom, setDurationZoom] = useState(1);
 
   // Mock Netflix shows data
   const netflixShows = [
     {
       id: 1,
       title: "Stranger Things",
-      type: "Series", 
+      type: "TV Show", 
       genre: "Horror",
       releaseYear: 2016,
       duration: "4 Seasons",
@@ -31,7 +39,7 @@ const NetflixDashboard = () => {
     {
       id: 2,
       title: "The Crown",
-      type: "Series",
+      type: "TV Show",
       genre: "Drama", 
       releaseYear: 2016,
       duration: "6 Seasons",
@@ -55,47 +63,103 @@ const NetflixDashboard = () => {
       imdbScore: 6.4,
       director: "Rawson Marshall Thurber",
       cast: ["Dwayne Johnson", "Ryan Reynolds", "Gal Gadot"]
+    },
+    {
+      id: 4,
+      title: "Squid Game",
+      type: "TV Show",
+      genre: "Drama",
+      releaseYear: 2021,
+      duration: "1 Season",
+      rating: "TV-MA",
+      dateAdded: "September 17, 2021",
+      description: "Hundreds of cash-strapped players accept a strange invitation to compete in children's games for a tempting prize.",
+      imdbScore: 8.0,
+      director: "Hwang Dong-hyuk",
+      cast: ["Lee Jung-jae", "Park Hae-soo", "Wi Ha-jun"]
+    },
+    {
+      id: 5,
+      title: "Extraction",
+      type: "Movie",
+      genre: "Action",
+      releaseYear: 2020,
+      duration: "116 min",
+      rating: "R",
+      dateAdded: "April 24, 2020",
+      description: "A black-market mercenary who has nothing to lose is hired to rescue the kidnapped son of an imprisoned international crime lord.",
+      imdbScore: 6.7,
+      director: "Sam Hargrave",
+      cast: ["Chris Hemsworth", "Rudhraksh Jaiswal", "Randeep Hooda"]
+    },
+    {
+      id: 6,
+      title: "Bridgerton",
+      type: "TV Show",
+      genre: "Romance",
+      releaseYear: 2020,
+      duration: "2 Seasons",
+      rating: "TV-MA",
+      dateAdded: "December 25, 2020",
+      description: "Wealth, lust, and betrayal set in the backdrop of Regency era England, seen through the eyes of the powerful Bridgerton family.",
+      imdbScore: 7.3,
+      director: "Chris Van Dusen",
+      cast: ["Nicola Coughlan", "Jonathan Bailey", "Phoebe Dynevor"]
     }
   ];
 
+  // Filter data based on selections
+  const filteredShows = netflixShows.filter(show => {
+    return (selectedGenre === 'All' || show.genre === selectedGenre) &&
+           (selectedYear === 'All' || show.releaseYear.toString() === selectedYear) &&
+           (selectedType === 'All' || show.type === selectedType);
+  });
+
+  // Dynamic KPI data based on filtered shows
   const kpiData = {
-    totalShows: 13500,
-    movies: 10400,
-    series: 3100,
-    avgRating: 6.49,
-    moviesPercentage: 77,
-    seriesPercentage: 23
+    totalShows: filteredShows.length,
+    movies: filteredShows.filter(show => show.type === 'Movie').length,
+    series: filteredShows.filter(show => show.type === 'TV Show').length,
+    avgRating: filteredShows.length > 0 ? (filteredShows.reduce((sum, show) => sum + show.imdbScore, 0) / filteredShows.length).toFixed(1) : 0,
+    moviesPercentage: filteredShows.length > 0 ? Math.round((filteredShows.filter(show => show.type === 'Movie').length / filteredShows.length) * 100) : 0,
+    seriesPercentage: filteredShows.length > 0 ? Math.round((filteredShows.filter(show => show.type === 'TV Show').length / filteredShows.length) * 100) : 0
   };
 
-  const genreData = [
-    { name: 'Action', value: 2847, color: '#E50914' },
-    { name: 'Drama', value: 2234, color: '#B91C1C' },
-    { name: 'Comedy', value: 1876, color: '#DC2626' },
-    { name: 'Documentary', value: 1543, color: '#EF4444' },
-    { name: 'Horror', value: 1234, color: '#F87171' },
-    { name: 'Romance', value: 987, color: '#FCA5A5' },
-    { name: 'Others', value: 2779, color: '#FECACA' }
-  ];
+  // Dynamic genre data based on filtered shows
+  const genreStats = filteredShows.reduce((acc, show) => {
+    acc[show.genre] = (acc[show.genre] || 0) + 1;
+    return acc;
+  }, {});
 
-  const yearlyData = [
-    { year: 2016, shows: 234, movies: 180, series: 54 },
-    { year: 2017, shows: 456, movies: 345, series: 111 },
-    { year: 2018, shows: 678, movies: 512, series: 166 },
-    { year: 2019, shows: 890, movies: 623, series: 267 },
-    { year: 2020, shows: 1234, movies: 876, series: 358 },
-    { year: 2021, shows: 1456, movies: 1023, series: 433 },
-    { year: 2022, shows: 1678, movies: 1201, series: 477 }
-  ];
+  const genreData = Object.entries(genreStats).map(([genre, count], index) => ({
+    name: genre,
+    value: count,
+    color: ['#E50914', '#B91C1C', '#DC2626', '#EF4444', '#F87171', '#FCA5A5', '#FECACA'][index % 7]
+  }));
 
-  const ratingData = [
-    { name: 'TV-MA', value: 37.93, color: '#E50914' },
-    { name: 'TV-14', value: 15.5, color: '#B91C1C' },
-    { name: 'TV-PG', value: 15.18, color: '#DC2626' },
-    { name: 'R', value: 9.7, color: '#EF4444' },
-    { name: 'PG-13', value: 8.23, color: '#F87171' },
-    { name: 'TV-Y7', value: 5.83, color: '#FCA5A5' },
-    { name: 'Others', value: 7.83, color: '#FECACA' }
-  ];
+  // Dynamic yearly data
+  const yearlyStats = filteredShows.reduce((acc, show) => {
+    const year = show.releaseYear;
+    if (!acc[year]) acc[year] = { year, shows: 0, movies: 0, series: 0 };
+    acc[year].shows++;
+    if (show.type === 'Movie') acc[year].movies++;
+    else acc[year].series++;
+    return acc;
+  }, {});
+
+  const yearlyData = Object.values(yearlyStats).sort((a, b) => a.year - b.year);
+
+  // Dynamic rating data
+  const ratingStats = filteredShows.reduce((acc, show) => {
+    acc[show.rating] = (acc[show.rating] || 0) + 1;
+    return acc;
+  }, {});
+
+  const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
+    name: rating,
+    value: filteredShows.length > 0 ? ((count / filteredShows.length) * 100).toFixed(1) : 0,
+    color: ['#E50914', '#B91C1C', '#DC2626', '#EF4444', '#F87171', '#FCA5A5', '#FECACA'][index % 7]
+  }));
 
   const contentQuality = [
     { metric: 'Original Content', value: 85 },
@@ -105,16 +169,9 @@ const NetflixDashboard = () => {
     { metric: 'Content Diversity', value: 88 }
   ];
 
-  const genres = ['All', 'Action', 'Drama', 'Comedy', 'Documentary', 'Horror', 'Romance'];
-  const years = ['All', '2022', '2021', '2020', '2019', '2018', '2017', '2016'];
-
-  const filteredShows = netflixShows.filter(show => {
-    return (selectedGenre === 'All' || show.genre === selectedGenre) &&
-           (selectedYear === 'All' || show.releaseYear.toString() === selectedYear);
-  });
-
-  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.2, 2));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
+  const genres = ['All', ...Array.from(new Set(netflixShows.map(show => show.genre)))];
+  const years = ['All', ...Array.from(new Set(netflixShows.map(show => show.releaseYear.toString()))).sort().reverse()];
+  const types = ['All', 'Movie', 'TV Show'];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -129,32 +186,6 @@ const NetflixDashboard = () => {
             <p className="text-gray-400">Full Insights & Analytics</p>
           </div>
         </div>
-        
-        {/* Filters and Zoom Controls */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handleZoomOut} className="text-gray-300 border-gray-600">
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <span className="text-gray-300 text-sm">{Math.round(zoomLevel * 100)}%</span>
-            <Button variant="outline" size="sm" onClick={handleZoomIn} className="text-gray-300 border-gray-600">
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {genres.map((genre) => (
-              <Button
-                key={genre}
-                variant={selectedGenre === genre ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedGenre(genre)}
-                className={selectedGenre === genre ? "bg-red-600 text-white" : "text-gray-300 border-gray-600"}
-              >
-                {genre}
-              </Button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Advanced Filters */}
@@ -166,21 +197,21 @@ const NetflixDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="text-gray-300 text-sm mb-2 block">Year</label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <label className="text-gray-300 text-sm mb-2 block">Content Type</label>
+              <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Select year" />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
-                  {years.map(year => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  {types.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Genre</label>
               <Select value={selectedGenre} onValueChange={setSelectedGenre}>
@@ -196,12 +227,27 @@ const NetflixDashboard = () => {
             </div>
             
             <div>
-              <label className="text-gray-300 text-sm mb-2 block">Show/Movie</label>
-              <Select value={selectedShow?.id || ''} onValueChange={(value) => setSelectedShow(filteredShows.find(s => s.id.toString() === value) || null)}>
+              <label className="text-gray-300 text-sm mb-2 block">Year</label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-gray-300 text-sm mb-2 block">Specific Show/Movie</label>
+              <Select value={selectedShow?.id?.toString() || ''} onValueChange={(value) => setSelectedShow(filteredShows.find(s => s.id.toString() === value) || null)}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Select show/movie" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="">All Shows</SelectItem>
                   {filteredShows.map(show => (
                     <SelectItem key={show.id} value={show.id.toString()}>{show.title}</SelectItem>
                   ))}
@@ -291,11 +337,8 @@ const NetflixDashboard = () => {
             <CardTitle className="text-sm font-medium opacity-90">Total Shows</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{kpiData.totalShows.toLocaleString()}</div>
+            <div className="text-3xl font-bold">{kpiData.totalShows}</div>
           </CardContent>
-          <div className="absolute -right-4 -bottom-4 opacity-20">
-            <div className="w-20 h-20 rounded-full bg-white/20"></div>
-          </div>
         </Card>
 
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white overflow-hidden relative">
@@ -304,7 +347,7 @@ const NetflixDashboard = () => {
             <Film className="h-4 w-4 ml-auto opacity-70" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-400">{kpiData.movies.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-red-400">{kpiData.movies}</div>
             <div className="text-sm opacity-70">{kpiData.moviesPercentage}%</div>
           </CardContent>
         </Card>
@@ -315,7 +358,7 @@ const NetflixDashboard = () => {
             <Tv className="h-4 w-4 ml-auto opacity-70" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-400">{kpiData.series.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-red-400">{kpiData.series}</div>
             <div className="text-sm opacity-70">{kpiData.seriesPercentage}%</div>
           </CardContent>
         </Card>
@@ -332,167 +375,224 @@ const NetflixDashboard = () => {
       </div>
 
       {/* Interactive Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Genre Distribution */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Genre Distribution</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(genreZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={genreData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={120}
-                  dataKey="value"
-                  animationBegin={0}
-                  animationDuration={800}
-                >
-                  {genreData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={genreData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    dataKey="value"
+                    animationBegin={0}
+                    animationDuration={800}
+                  >
+                    {genreData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         {/* Yearly Release Trends */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-white">Yearly Release</CardTitle>
-            <div className="flex space-x-4 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-gray-300">Movies</span>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-white">Yearly Release</CardTitle>
+              <div className="flex space-x-4 text-sm mt-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-gray-300">Movies</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-gray-300">TV Shows</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-300">TV Shows</span>
-              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setYearlyZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(yearlyZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setYearlyZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={yearlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="year" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-                <Bar dataKey="movies" fill="#E50914" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="series" fill="#3B82F6" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ transform: `scale(${yearlyZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={yearlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="year" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Bar dataKey="movies" fill="#E50914" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="series" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         {/* View Rating Distribution */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">View Rating</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setRatingZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(ratingZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setRatingZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={ratingData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  dataKey="value"
-                  animationBegin={200}
-                  animationDuration={800}
-                >
-                  {ratingData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                  formatter={(value) => [`${value}%`, 'Percentage']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ transform: `scale(${ratingZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={ratingData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    dataKey="value"
+                    animationBegin={200}
+                    animationDuration={800}
+                  >
+                    {ratingData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                    formatter={(value) => [`${value}%`, 'Percentage']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Additional Interactive Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Quality Radar */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content Quality Metrics</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setQualityZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(qualityZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setQualityZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={contentQuality}>
-                <PolarGrid stroke="#374151" />
-                <PolarAngleAxis dataKey="metric" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
-                <PolarRadiusAxis angle={0} domain={[0, 100]} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
-                <Radar name="Quality" dataKey="value" stroke="#E50914" fill="#E50914" fillOpacity={0.2} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+            <div style={{ transform: `scale(${qualityZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <RadarChart data={contentQuality}>
+                  <PolarGrid stroke="#374151" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                  <PolarRadiusAxis angle={0} domain={[0, 100]} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
+                  <Radar name="Quality" dataKey="value" stroke="#E50914" fill="#E50914" fillOpacity={0.2} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         {/* Show Duration Distribution */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Show Duration Distribution</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setDurationZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(durationZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setDurationZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[
-                { duration: '< 30 min', percentage: 14.22, count: 1920 },
-                { duration: '30-60 min', percentage: 59.87, count: 8084 },
-                { duration: '60-90 min', percentage: 24.17, count: 3263 },
-                { duration: '> 90 min', percentage: 1.77, count: 239 }
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-gray-300">{item.duration}</span>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-32 bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-red-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${item.percentage}%` }}
-                      ></div>
+            <div style={{ transform: `scale(${durationZoom})`, transformOrigin: 'center' }}>
+              <div className="space-y-4">
+                {[
+                  { duration: '< 30 min', percentage: 14.22, count: Math.floor(kpiData.totalShows * 0.1422) },
+                  { duration: '30-60 min', percentage: 59.87, count: Math.floor(kpiData.totalShows * 0.5987) },
+                  { duration: '60-90 min', percentage: 24.17, count: Math.floor(kpiData.totalShows * 0.2417) },
+                  { duration: '> 90 min', percentage: 1.77, count: Math.floor(kpiData.totalShows * 0.0177) }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-gray-300">{item.duration}</span>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-32 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${item.percentage}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-white text-sm w-12">{item.percentage}%</span>
                     </div>
-                    <span className="text-white text-sm w-12">{item.percentage}%</span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -504,9 +604,9 @@ const NetflixDashboard = () => {
           <CardTitle className="text-white">About Shows</CardTitle>
         </CardHeader>
         <CardContent className="text-gray-300 text-sm space-y-2">
-          <p>"Fauci" reveals the extraordinary life and career of Dr. Anthony Fauci...</p>
-          <p>"Limitless with Chris Hemsworth" is coming to Disney+ in 2022.</p>
-          <p>"Monsters at Work" tells the story of Tylor Tuskmon and his dream to become a Jokester.</p>
+          <p>"Stranger Things" has become one of Netflix's most popular original series, combining 80s nostalgia with supernatural horror elements.</p>
+          <p>"The Crown" offers an intimate look at the British Royal Family, featuring award-winning performances and historical accuracy.</p>
+          <p>"Squid Game" became a global phenomenon, showcasing Korean culture and addressing social inequality themes.</p>
           <Badge variant="secondary" className="mt-2">Latest Updates</Badge>
         </CardContent>
       </Card>
