@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,11 +6,33 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { useState } from 'react';
 import { Film, Tv, ZoomIn, ZoomOut, Filter } from 'lucide-react';
 
+interface Show {
+  id: number;
+  title: string;
+  type: string;
+  genre: string;
+  releaseYear: number;
+  duration: string;
+  rating: string;
+  dateAdded: string;
+  description: string;
+  imdbScore: number;
+  director: string;
+  cast: string[];
+}
+
+interface YearlyStats {
+  year: number;
+  shows: number;
+  movies: number;
+  series: number;
+}
+
 const NetflixDashboard = () => {
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
-  const [selectedShow, setSelectedShow] = useState(null);
+  const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   
   // Individual zoom states for each chart
   const [genreZoom, setGenreZoom] = useState(1);
@@ -21,7 +42,7 @@ const NetflixDashboard = () => {
   const [durationZoom, setDurationZoom] = useState(1);
 
   // Mock Netflix shows data
-  const netflixShows = [
+  const netflixShows: Show[] = [
     {
       id: 1,
       title: "Stranger Things",
@@ -120,13 +141,13 @@ const NetflixDashboard = () => {
     totalShows: filteredShows.length,
     movies: filteredShows.filter(show => show.type === 'Movie').length,
     series: filteredShows.filter(show => show.type === 'TV Show').length,
-    avgRating: filteredShows.length > 0 ? (filteredShows.reduce((sum, show) => sum + show.imdbScore, 0) / filteredShows.length).toFixed(1) : 0,
+    avgRating: filteredShows.length > 0 ? (filteredShows.reduce((sum, show) => sum + show.imdbScore, 0) / filteredShows.length).toFixed(1) : '0',
     moviesPercentage: filteredShows.length > 0 ? Math.round((filteredShows.filter(show => show.type === 'Movie').length / filteredShows.length) * 100) : 0,
     seriesPercentage: filteredShows.length > 0 ? Math.round((filteredShows.filter(show => show.type === 'TV Show').length / filteredShows.length) * 100) : 0
   };
 
   // Dynamic genre data based on filtered shows
-  const genreStats = filteredShows.reduce((acc, show) => {
+  const genreStats = filteredShows.reduce((acc: Record<string, number>, show) => {
     acc[show.genre] = (acc[show.genre] || 0) + 1;
     return acc;
   }, {});
@@ -138,7 +159,7 @@ const NetflixDashboard = () => {
   }));
 
   // Dynamic yearly data
-  const yearlyStats = filteredShows.reduce((acc, show) => {
+  const yearlyStats = filteredShows.reduce((acc: Record<number, YearlyStats>, show) => {
     const year = show.releaseYear;
     if (!acc[year]) acc[year] = { year, shows: 0, movies: 0, series: 0 };
     acc[year].shows++;
@@ -150,14 +171,14 @@ const NetflixDashboard = () => {
   const yearlyData = Object.values(yearlyStats).sort((a, b) => a.year - b.year);
 
   // Dynamic rating data
-  const ratingStats = filteredShows.reduce((acc, show) => {
+  const ratingStats = filteredShows.reduce((acc: Record<string, number>, show) => {
     acc[show.rating] = (acc[show.rating] || 0) + 1;
     return acc;
   }, {});
 
   const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
     name: rating,
-    value: filteredShows.length > 0 ? ((count / filteredShows.length) * 100).toFixed(1) : 0,
+    value: filteredShows.length > 0 ? ((count / filteredShows.length) * 100).toFixed(1) : '0',
     color: ['#E50914', '#B91C1C', '#DC2626', '#EF4444', '#F87171', '#FCA5A5', '#FECACA'][index % 7]
   }));
 

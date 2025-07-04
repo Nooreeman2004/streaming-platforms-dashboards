@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,12 +6,47 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useState } from 'react';
 import { ZoomIn, ZoomOut, Filter } from 'lucide-react';
 
+interface Show {
+  id: number;
+  title: string;
+  platform: string;
+  type: string;
+  genre: string;
+  releaseYear: number;
+  duration: string;
+  rating: string;
+  dateAdded: string;
+  description: string;
+  imdbScore: number;
+  director: string;
+  cast: string[];
+}
+
+interface PlatformStats {
+  totalShows: number;
+  movies: number;
+  series: number;
+  totalRating: number;
+}
+
+interface GenreStats {
+  Netflix: number;
+  Amazon: number;
+  Disney: number;
+}
+
+interface YearlyStats {
+  Netflix: number;
+  Amazon: number;
+  Disney: number;
+}
+
 const ComparisonDashboard = () => {
   const [selectedPlatform, setSelectedPlatform] = useState('All');
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
-  const [selectedShow, setSelectedShow] = useState(null);
+  const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   
   // Individual zoom states for each chart
   const [genreZoom, setGenreZoom] = useState(1);
@@ -22,7 +56,7 @@ const ComparisonDashboard = () => {
   const [yearlyZoom, setYearlyZoom] = useState(1);
 
   // Mock detailed show data across all platforms
-  const showsData = [
+  const showsData: Show[] = [
     {
       id: 1,
       title: "Stranger Things",
@@ -139,7 +173,7 @@ const ComparisonDashboard = () => {
   });
 
   // Dynamic platform data based on filtered shows
-  const platformStats = filteredShows.reduce((acc, show) => {
+  const platformStats = filteredShows.reduce((acc: Record<string, PlatformStats>, show) => {
     if (!acc[show.platform]) {
       acc[show.platform] = { totalShows: 0, movies: 0, series: 0, totalRating: 0 };
     }
@@ -160,7 +194,7 @@ const ComparisonDashboard = () => {
   }));
 
   // Dynamic genre comparison
-  const genreStats = {};
+  const genreStats: Record<string, GenreStats> = {};
   filteredShows.forEach(show => {
     if (!genreStats[show.genre]) {
       genreStats[show.genre] = { Netflix: 0, Amazon: 0, Disney: 0 };
@@ -172,11 +206,13 @@ const ComparisonDashboard = () => {
 
   const genreComparison = Object.entries(genreStats).map(([genre, counts]) => ({
     genre,
-    ...counts
+    Netflix: counts.Netflix,
+    Amazon: counts.Amazon,
+    Disney: counts.Disney
   }));
 
   // Dynamic rating distribution
-  const ratingStats = {};
+  const ratingStats: Record<string, GenreStats> = {};
   filteredShows.forEach(show => {
     if (!ratingStats[show.rating]) {
       ratingStats[show.rating] = { Netflix: 0, Amazon: 0, Disney: 0 };
@@ -187,17 +223,17 @@ const ComparisonDashboard = () => {
   });
 
   const ratingDistribution = Object.entries(ratingStats).map(([rating, counts]) => {
-    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const total = Object.values(counts).reduce((sum: number, count: number) => sum + count, 0);
     return {
       rating,
-      Netflix: total > 0 ? ((counts.Netflix / total) * 100).toFixed(1) : 0,
-      Amazon: total > 0 ? ((counts.Amazon / total) * 100).toFixed(1) : 0,
-      Disney: total > 0 ? ((counts.Disney / total) * 100).toFixed(1) : 0
+      Netflix: total > 0 ? ((counts.Netflix / total) * 100).toFixed(1) : '0',
+      Amazon: total > 0 ? ((counts.Amazon / total) * 100).toFixed(1) : '0',
+      Disney: total > 0 ? ((counts.Disney / total) * 100).toFixed(1) : '0'
     };
   });
 
   // Dynamic yearly comparison
-  const yearlyStats = {};
+  const yearlyStats: Record<number, YearlyStats> = {};
   filteredShows.forEach(show => {
     if (!yearlyStats[show.releaseYear]) {
       yearlyStats[show.releaseYear] = { Netflix: 0, Amazon: 0, Disney: 0 };
@@ -208,7 +244,12 @@ const ComparisonDashboard = () => {
   });
 
   const yearlyComparison = Object.entries(yearlyStats)
-    .map(([year, counts]) => ({ year: parseInt(year), ...counts }))
+    .map(([year, counts]) => ({ 
+      year: parseInt(year), 
+      Netflix: counts.Netflix,
+      Amazon: counts.Amazon,
+      Disney: counts.Disney
+    }))
     .sort((a, b) => a.year - b.year);
 
   const contentQualityData = [
