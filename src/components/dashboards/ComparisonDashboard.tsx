@@ -1,10 +1,10 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, AreaChart, Area } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, AreaChart, Area, ComposedChart } from 'recharts';
 import { useState } from 'react';
-import { ZoomIn, ZoomOut, TrendingUp, Target, Users, Award } from 'lucide-react';
+import { ZoomIn, ZoomOut, TrendingUp, Target, Users, Award, Filter, Globe } from 'lucide-react';
 
 const ComparisonDashboard = () => {
   const [zoom, setZoom] = useState(1);
@@ -15,6 +15,12 @@ const ComparisonDashboard = () => {
   const [engagementZoom, setEngagementZoom] = useState(1);
   const [revenueZoom, setRevenueZoom] = useState(1);
   const [demographicsZoom, setDemographicsZoom] = useState(1);
+  const [ratingMapZoom, setRatingMapZoom] = useState(1);
+
+  // Filter states
+  const [selectedGenre, setSelectedGenre] = useState('all');
+  const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedMetric, setSelectedMetric] = useState('content');
 
   const platformData = [
     { platform: 'Netflix', totalShows: 13500, movies: 10400, series: 3100, color: '#E50914', subscribers: 230, revenue: 31.6 },
@@ -34,8 +40,8 @@ const ComparisonDashboard = () => {
 
   const marketShare = [
     { name: 'Netflix', value: 54.8, color: '#E50914' },
-    { name: 'Amazon Prime', value: 39.3, color: '#00A8E1' },
-    { name: 'Disney+', value: 5.9, color: '#8B5CF6' }
+    { name: 'Amazon Prime', value: 39.3, color: '#FF9500' },
+    { name: 'Disney+', value: 5.9, color: '#00D4FF' }
   ];
 
   const yearlyGrowth = [
@@ -74,6 +80,29 @@ const ComparisonDashboard = () => {
     { ageGroup: '55+', Netflix: 5, Amazon: 7, Disney: 7 }
   ];
 
+  // Platform ratings by country for map visualization
+  const platformRatingsByCountry = [
+    { country: 'United States', Netflix: 8.5, Amazon: 8.2, Disney: 8.7, subscribers: 75000000 },
+    { country: 'United Kingdom', Netflix: 8.3, Amazon: 8.0, Disney: 8.6, subscribers: 15000000 },
+    { country: 'Canada', Netflix: 8.4, Amazon: 7.9, Disney: 8.5, subscribers: 8000000 },
+    { country: 'Germany', Netflix: 8.1, Amazon: 8.1, Disney: 8.3, subscribers: 12000000 },
+    { country: 'France', Netflix: 7.9, Amazon: 7.8, Disney: 8.4, subscribers: 9000000 },
+    { country: 'Japan', Netflix: 8.0, Amazon: 7.7, Disney: 8.8, subscribers: 6000000 },
+    { country: 'Australia', Netflix: 8.2, Amazon: 7.8, Disney: 8.2, subscribers: 4000000 },
+    { country: 'Brazil', Netflix: 8.3, Amazon: 7.6, Disney: 8.1, subscribers: 18000000 },
+    { country: 'India', Netflix: 7.8, Amazon: 8.3, Disney: 7.9, subscribers: 25000000 },
+    { country: 'South Korea', Netflix: 8.6, Amazon: 7.5, Disney: 8.0, subscribers: 3000000 }
+  ];
+
+  // Filter data based on selections
+  const getFilteredData = () => {
+    let filteredGenreData = genreComparison;
+    if (selectedGenre !== 'all') {
+      filteredGenreData = genreComparison.filter(item => item.genre.toLowerCase() === selectedGenre);
+    }
+    return filteredGenreData;
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -98,6 +127,83 @@ const ComparisonDashboard = () => {
           </Button>
         </div>
       </div>
+
+      {/* Filters */}
+      <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <Filter className="h-5 w-5" />
+            <span>Filters & Analytics Controls</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="text-gray-400 text-sm mb-2 block">Genre Filter</label>
+              <Select value={selectedGenre} onValueChange={setSelectedGenre}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="All Genres" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="all">All Genres</SelectItem>
+                  <SelectItem value="action">Action</SelectItem>
+                  <SelectItem value="comedy">Comedy</SelectItem>
+                  <SelectItem value="drama">Drama</SelectItem>
+                  <SelectItem value="animation">Animation</SelectItem>
+                  <SelectItem value="documentary">Documentary</SelectItem>
+                  <SelectItem value="horror">Horror</SelectItem>
+                  <SelectItem value="romance">Romance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-gray-400 text-sm mb-2 block">Year Filter</label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="All Years" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="all">All Years</SelectItem>
+                  <SelectItem value="2023">2023</SelectItem>
+                  <SelectItem value="2022">2022</SelectItem>
+                  <SelectItem value="2021">2021</SelectItem>
+                  <SelectItem value="2020">2020</SelectItem>
+                  <SelectItem value="2019">2019</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-gray-400 text-sm mb-2 block">Primary Metric</label>
+              <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Content Volume" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="content">Content Volume</SelectItem>
+                  <SelectItem value="revenue">Revenue</SelectItem>
+                  <SelectItem value="subscribers">Subscribers</SelectItem>
+                  <SelectItem value="engagement">User Engagement</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-end">
+              <Button 
+                onClick={() => {
+                  setSelectedGenre('all');
+                  setSelectedYear('all');
+                  setSelectedMetric('content');
+                }}
+                className="w-full bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 text-white"
+              >
+                Reset Filters
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Platform KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -138,7 +244,7 @@ const ComparisonDashboard = () => {
 
       {/* Charts Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Market Share */}
+        {/* Market Share - Fixed colors and removed gaps */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Market Share by Content Volume</CardTitle>
@@ -161,11 +267,11 @@ const ComparisonDashboard = () => {
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
-                    paddingAngle={5}
+                    paddingAngle={0}
                     dataKey="value"
                   >
                     {marketShare.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -179,6 +285,14 @@ const ComparisonDashboard = () => {
                   />
                 </PieChart>
               </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center space-x-4 mt-4">
+              {marketShare.map((entry, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                  <span className="text-gray-300 text-sm">{entry.name}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -224,6 +338,71 @@ const ComparisonDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Global Platform Ratings Map */}
+      <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-white flex items-center space-x-2">
+            <Globe className="h-5 w-5" />
+            <span>Platform Ratings by Country</span>
+          </CardTitle>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={() => setRatingMapZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+              <ZoomOut className="h-3 w-3" />
+            </Button>
+            <span className="text-gray-300 text-xs">{Math.round(ratingMapZoom * 100)}%</span>
+            <Button variant="outline" size="sm" onClick={() => setRatingMapZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+              <ZoomIn className="h-3 w-3" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div style={{ transform: `scale(${ratingMapZoom})`, transformOrigin: 'center' }}>
+            <ResponsiveContainer width="100%" height={400}>
+              <ComposedChart data={platformRatingsByCountry} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="country" 
+                  stroke="#9CA3AF" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  fontSize={10}
+                />
+                <YAxis stroke="#9CA3AF" domain={[7, 9]} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Bar dataKey="Netflix" fill="#E50914" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Amazon" fill="#FF9500" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Disney" fill="#00D4FF" radius={[2, 2, 0, 0]} />
+                <Line type="monotone" dataKey="Netflix" stroke="#E50914" strokeWidth={2} />
+                <Line type="monotone" dataKey="Amazon" stroke="#FF9500" strokeWidth={2} />
+                <Line type="monotone" dataKey="Disney" stroke="#00D4FF" strokeWidth={2} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center space-x-6 mt-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span className="text-gray-300 text-sm">Netflix Rating</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+              <span className="text-gray-300 text-sm">Amazon Rating</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+              <span className="text-gray-300 text-sm">Disney+ Rating</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Charts Grid - Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -310,10 +489,17 @@ const ComparisonDashboard = () => {
         </Card>
       </div>
 
-      {/* Genre Comparison */}
+      {/* Genre Comparison - Apply filters */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-white">Genre Distribution Comparison</CardTitle>
+          <CardTitle className="text-white">
+            Genre Distribution Comparison 
+            {selectedGenre !== 'all' && (
+              <Badge className="ml-2 bg-blue-500/20 text-blue-400">
+                {selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)}
+              </Badge>
+            )}
+          </CardTitle>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
               <ZoomOut className="h-3 w-3" />
@@ -327,7 +513,7 @@ const ComparisonDashboard = () => {
         <CardContent>
           <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={genreComparison}>
+              <BarChart data={getFilteredData()}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="genre" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" />
@@ -340,10 +526,24 @@ const ComparisonDashboard = () => {
                   }} 
                 />
                 <Bar dataKey="Netflix" fill="#E50914" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Amazon" fill="#00A8E1" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Disney" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Amazon" fill="#FF9500" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Disney" fill="#00D4FF" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center space-x-6 mt-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span className="text-gray-300 text-sm">Netflix</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+              <span className="text-gray-300 text-sm">Amazon Prime</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+              <span className="text-gray-300 text-sm">Disney+</span>
+            </div>
           </div>
         </CardContent>
       </Card>
