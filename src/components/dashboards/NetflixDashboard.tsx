@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -263,12 +264,12 @@ const NetflixDashboard = () => {
             
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Specific Show/Movie</label>
-              <Select value={selectedShow?.id?.toString() || ''} onValueChange={(value) => setSelectedShow(filteredShows.find(s => s.id.toString() === value) || null)}>
+              <Select value={selectedShow?.id?.toString() || 'none'} onValueChange={(value) => setSelectedShow(value === 'none' ? null : filteredShows.find(s => s.id.toString() === value) || null)}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Select show/movie" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="">All Shows</SelectItem>
+                  <SelectItem value="none">All Shows</SelectItem>
                   {filteredShows.map(show => (
                     <SelectItem key={show.id} value={show.id.toString()}>{show.title}</SelectItem>
                   ))}
