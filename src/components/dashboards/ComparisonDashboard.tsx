@@ -2,25 +2,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, AreaChart, Area } from 'recharts';
 import { useState } from 'react';
-import { ZoomIn, ZoomOut, TrendingUp } from 'lucide-react';
+import { ZoomIn, ZoomOut, TrendingUp, Target, Users, Award } from 'lucide-react';
 
 const ComparisonDashboard = () => {
   const [zoom, setZoom] = useState(1);
+  const [marketZoom, setMarketZoom] = useState(1);
+  const [growthZoom, setGrowthZoom] = useState(1);
+  const [genreZoom, setGenreZoom] = useState(1);
+  const [qualityZoom, setQualityZoom] = useState(1);
+  const [engagementZoom, setEngagementZoom] = useState(1);
+  const [revenueZoom, setRevenueZoom] = useState(1);
+  const [demographicsZoom, setDemographicsZoom] = useState(1);
 
   const platformData = [
-    { platform: 'Netflix', totalShows: 13500, movies: 10400, series: 3100, color: '#E50914' },
-    { platform: 'Amazon Prime', totalShows: 9684, movies: 7814, series: 1854, color: '#00A8E1' },
-    { platform: 'Disney+', totalShows: 1450, movies: 1052, series: 398, color: '#8B5CF6' }
+    { platform: 'Netflix', totalShows: 13500, movies: 10400, series: 3100, color: '#E50914', subscribers: 230, revenue: 31.6 },
+    { platform: 'Amazon Prime', totalShows: 9684, movies: 7814, series: 1854, color: '#00A8E1', subscribers: 200, revenue: 25.0 },
+    { platform: 'Disney+', totalShows: 1450, movies: 1052, series: 398, color: '#8B5CF6', subscribers: 118, revenue: 7.4 }
   ];
 
   const genreComparison = [
-    { genre: 'Action', Netflix: 1854, Amazon: 1854, Disney: 98 },
-    { genre: 'Comedy', Netflix: 1456, Amazon: 1456, Disney: 145 },
-    { genre: 'Drama', Netflix: 1234, Amazon: 1234, Disney: 167 },
-    { genre: 'Animation', Netflix: 765, Amazon: 765, Disney: 234 },
-    { genre: 'Documentary', Netflix: 987, Amazon: 987, Disney: 123 }
+    { genre: 'Action', Netflix: 1854, Amazon: 1654, Disney: 298 },
+    { genre: 'Comedy', Netflix: 1456, Amazon: 1256, Disney: 145 },
+    { genre: 'Drama', Netflix: 1234, Amazon: 1134, Disney: 167 },
+    { genre: 'Animation', Netflix: 765, Amazon: 565, Disney: 434 },
+    { genre: 'Documentary', Netflix: 987, Amazon: 1287, Disney: 123 },
+    { genre: 'Horror', Netflix: 456, Amazon: 356, Disney: 23 },
+    { genre: 'Romance', Netflix: 654, Amazon: 454, Disney: 87 }
   ];
 
   const marketShare = [
@@ -32,7 +41,37 @@ const ComparisonDashboard = () => {
   const yearlyGrowth = [
     { year: 2019, Netflix: 8500, Amazon: 6500, Disney: 500 },
     { year: 2020, Netflix: 11000, Amazon: 8000, Disney: 900 },
-    { year: 2021, Netflix: 13500, Amazon: 9684, Disney: 1450 }
+    { year: 2021, Netflix: 13500, Amazon: 9684, Disney: 1450 },
+    { year: 2022, Netflix: 15000, Amazon: 11000, Disney: 1800 },
+    { year: 2023, Netflix: 16500, Amazon: 12500, Disney: 2200 }
+  ];
+
+  const contentQuality = [
+    { platform: 'Netflix', originalContent: 85, userRating: 8.2, criticalAcclaim: 72, globalReach: 95, contentDiversity: 88 },
+    { platform: 'Amazon Prime', originalContent: 78, userRating: 7.8, criticalAcclaim: 75, globalReach: 87, contentDiversity: 92 },
+    { platform: 'Disney+', originalContent: 92, userRating: 8.5, criticalAcclaim: 85, globalReach: 82, contentDiversity: 65 }
+  ];
+
+  const userEngagement = [
+    { platform: 'Netflix', dailyActiveUsers: 85, avgWatchTime: 3.2, retention: 92, satisfaction: 4.2 },
+    { platform: 'Amazon Prime', dailyActiveUsers: 67, avgWatchTime: 2.8, retention: 88, satisfaction: 4.0 },
+    { platform: 'Disney+', dailyActiveUsers: 78, avgWatchTime: 2.5, retention: 95, satisfaction: 4.5 }
+  ];
+
+  const revenueData = [
+    { year: 2019, Netflix: 20.2, Amazon: 14.5, Disney: 0 },
+    { year: 2020, Netflix: 25.0, Amazon: 19.2, Disney: 2.8 },
+    { year: 2021, Netflix: 29.7, Amazon: 22.1, Disney: 5.5 },
+    { year: 2022, Netflix: 31.6, Amazon: 25.0, Disney: 7.4 },
+    { year: 2023, Netflix: 33.7, Amazon: 27.8, Disney: 8.9 }
+  ];
+
+  const demographicsData = [
+    { ageGroup: '18-24', Netflix: 23, Amazon: 18, Disney: 15 },
+    { ageGroup: '25-34', Netflix: 32, Amazon: 28, Disney: 25 },
+    { ageGroup: '35-44', Netflix: 28, Amazon: 31, Disney: 35 },
+    { ageGroup: '45-54', Netflix: 12, Amazon: 16, Disney: 18 },
+    { ageGroup: '55+', Netflix: 5, Amazon: 7, Disney: 7 }
   ];
 
   return (
@@ -87,9 +126,9 @@ const ComparisonDashboard = () => {
                 <span className="text-white font-bold">{platform.series.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Movies %</span>
+                <span className="text-gray-400">Subscribers (M)</span>
                 <Badge variant="secondary" style={{ backgroundColor: `${platform.color}20`, color: platform.color }}>
-                  {Math.round((platform.movies / platform.totalShows) * 100)}%
+                  {platform.subscribers}M
                 </Badge>
               </div>
             </CardContent>
@@ -97,15 +136,24 @@ const ComparisonDashboard = () => {
         ))}
       </div>
 
-      {/* Charts Grid */}
+      {/* Charts Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Market Share */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Market Share by Content Volume</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setMarketZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(marketZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setMarketZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}>
+            <div style={{ transform: `scale(${marketZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -137,16 +185,69 @@ const ComparisonDashboard = () => {
 
         {/* Content Growth Over Time */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white flex items-center space-x-2">
               <TrendingUp className="h-5 w-5" />
-              <span>Content Growth (2019-2021)</span>
+              <span>Content Growth (2019-2023)</span>
             </CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setGrowthZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(growthZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setGrowthZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}>
+            <div style={{ transform: `scale(${growthZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={yearlyGrowth}>
+                <AreaChart data={yearlyGrowth}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="year" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Area type="monotone" dataKey="Netflix" stackId="1" stroke="#E50914" fill="#E50914" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="Amazon" stackId="1" stroke="#00A8E1" fill="#00A8E1" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="Disney" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Grid - Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Comparison */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Award className="h-5 w-5" />
+              <span>Revenue Growth (Billions $)</span>
+            </CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setRevenueZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(revenueZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setRevenueZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${revenueZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="year" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
@@ -166,29 +267,65 @@ const ComparisonDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* User Demographics */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Users className="h-5 w-5" />
+              <span>User Demographics by Age</span>
+            </CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setDemographicsZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(demographicsZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setDemographicsZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${demographicsZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={demographicsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="ageGroup" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Bar dataKey="Netflix" fill="#E50914" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="Amazon" fill="#00A8E1" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="Disney" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Genre Comparison */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white">Genre Distribution Comparison</CardTitle>
-          <div className="flex space-x-6 text-sm mt-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span className="text-gray-300">Netflix</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span className="text-gray-300">Amazon Prime</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-              <span className="text-gray-300">Disney+</span>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+              <ZoomOut className="h-3 w-3" />
+            </Button>
+            <span className="text-gray-300 text-xs">{Math.round(genreZoom * 100)}%</span>
+            <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+              <ZoomIn className="h-3 w-3" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}>
+          <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
             <ResponsiveContainer width="100%" height={400}>
               <BarChart data={genreComparison}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -210,6 +347,95 @@ const ComparisonDashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Charts Grid - Row 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Content Quality Radar */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Target className="h-5 w-5" />
+              <span>Content Quality Metrics</span>
+            </CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setQualityZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(qualityZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setQualityZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${qualityZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={350}>
+                <RadarChart data={[
+                  { metric: 'Original Content', Netflix: 85, Amazon: 78, Disney: 92 },
+                  { metric: 'User Rating', Netflix: 82, Amazon: 78, Disney: 85 },
+                  { metric: 'Critical Acclaim', Netflix: 72, Amazon: 75, Disney: 85 },
+                  { metric: 'Global Reach', Netflix: 95, Amazon: 87, Disney: 82 },
+                  { metric: 'Content Diversity', Netflix: 88, Amazon: 92, Disney: 65 }
+                ]}>
+                  <PolarGrid stroke="#374151" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                  <PolarRadiusAxis angle={0} domain={[0, 100]} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
+                  <Radar name="Netflix" dataKey="Netflix" stroke="#E50914" fill="#E50914" fillOpacity={0.2} />
+                  <Radar name="Amazon" dataKey="Amazon" stroke="#00A8E1" fill="#00A8E1" fillOpacity={0.2} />
+                  <Radar name="Disney" dataKey="Disney" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.2} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Engagement Scatter */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">User Engagement vs Satisfaction</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setEngagementZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(engagementZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setEngagementZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${engagementZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={350}>
+                <ScatterChart>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis type="number" dataKey="dailyActiveUsers" name="Daily Active Users %" stroke="#9CA3AF" />
+                  <YAxis type="number" dataKey="satisfaction" name="Satisfaction" domain={[0, 5]} stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                    cursor={{ strokeDasharray: '3 3' }}
+                  />
+                  <Scatter name="Netflix" data={[{ dailyActiveUsers: 85, satisfaction: 4.2, platform: 'Netflix' }]} fill="#E50914" />
+                  <Scatter name="Amazon" data={[{ dailyActiveUsers: 67, satisfaction: 4.0, platform: 'Amazon Prime' }]} fill="#00A8E1" />
+                  <Scatter name="Disney" data={[{ dailyActiveUsers: 78, satisfaction: 4.5, platform: 'Disney+' }]} fill="#8B5CF6" />
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -234,6 +460,10 @@ const ComparisonDashboard = () => {
               <span>Family Friendly</span>
               <Badge className="bg-purple-500/20 text-purple-400">Disney+</Badge>
             </div>
+            <div className="flex items-center justify-between">
+              <span>Highest Revenue</span>
+              <Badge className="bg-red-500/20 text-red-400">Netflix</Badge>
+            </div>
           </CardContent>
         </Card>
 
@@ -242,9 +472,9 @@ const ComparisonDashboard = () => {
             <CardTitle className="text-white">Platform Strengths</CardTitle>
           </CardHeader>
           <CardContent className="text-gray-300 text-sm space-y-2">
-            <p><strong className="text-red-400">Netflix:</strong> Dominates with original series and global content variety.</p>
-            <p><strong className="text-blue-400">Amazon Prime:</strong> Strong in movies and documentaries with diverse catalog.</p>
-            <p><strong className="text-purple-400">Disney+:</strong> Excellence in family content and premium animated features.</p>
+            <p><strong className="text-red-400">Netflix:</strong> Dominates with original series and global content variety. Highest subscriber base and revenue.</p>
+            <p><strong className="text-blue-400">Amazon Prime:</strong> Strong in movies and documentaries with diverse catalog. Excellent content diversity.</p>
+            <p><strong className="text-purple-400">Disney+:</strong> Excellence in family content and premium animated features. Highest user satisfaction and retention.</p>
           </CardContent>
         </Card>
       </div>
