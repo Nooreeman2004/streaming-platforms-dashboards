@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -422,9 +421,8 @@ const NetflixDashboard = () => {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={120}
+                    paddingAngle={5}
                     dataKey="value"
-                    animationBegin={0}
-                    animationDuration={800}
                   >
                     {genreData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -516,9 +514,8 @@ const NetflixDashboard = () => {
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
+                    paddingAngle={5}
                     dataKey="value"
-                    animationBegin={200}
-                    animationDuration={800}
                   >
                     {ratingData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />

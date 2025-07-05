@@ -2,12 +2,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useState } from 'react';
-import { Film, Tv } from 'lucide-react';
+import { Film, Tv, ZoomIn, ZoomOut, Filter } from 'lucide-react';
 
 const AmazonDashboard = () => {
   const [selectedGenre, setSelectedGenre] = useState('All');
+  const [selectedYear, setSelectedYear] = useState('All');
+  const [selectedType, setSelectedType] = useState('All');
+  
+  // Individual zoom states for each chart
+  const [genreZoom, setGenreZoom] = useState(1);
+  const [durationZoom, setDurationZoom] = useState(1);
+  const [ratingZoom, setRatingZoom] = useState(1);
 
   const kpiData = {
     totalShows: 9684,
@@ -53,6 +61,8 @@ const AmazonDashboard = () => {
   ];
 
   const genres = ['All', 'Action', 'Adventure', 'Comedy', 'Drama', 'Documentary', 'Animation'];
+  const years = ['All', '2019', '2020', '2021'];
+  const types = ['All', 'Movie', 'TV Show'];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -67,21 +77,62 @@ const AmazonDashboard = () => {
             <p className="text-gray-400">Full Insights & Analytics</p>
           </div>
         </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {genres.map((genre) => (
-            <Button
-              key={genre}
-              variant={selectedGenre === genre ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedGenre(genre)}
-              className={selectedGenre === genre ? "bg-blue-600 text-white" : "text-gray-300 border-gray-600"}
-            >
-              {genre}
-            </Button>
-          ))}
-        </div>
       </div>
+
+      {/* Filters */}
+      <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <Filter className="h-5 w-5" />
+            <span>Filters</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-gray-300 text-sm mb-2 block">Content Type</label>
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {types.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-gray-300 text-sm mb-2 block">Genre</label>
+              <Select value={selectedGenre} onValueChange={setSelectedGenre}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select genre" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {genres.map(genre => (
+                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-gray-300 text-sm mb-2 block">Year</label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -134,92 +185,124 @@ const AmazonDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Genre Distribution */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Genre</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(genreZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {genreData.slice(0, 6).map((genre, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">{genre.name}</span>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-24 bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="h-2 rounded-full transition-all duration-500"
-                        style={{ 
-                          width: `${(genre.value / Math.max(...genreData.map(g => g.value))) * 100}%`,
-                          backgroundColor: genre.color
-                        }}
-                      ></div>
+            <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
+              <div className="space-y-3">
+                {genreData.slice(0, 6).map((genre, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-gray-300 text-sm">{genre.name}</span>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="h-2 rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${(genre.value / Math.max(...genreData.map(g => g.value))) * 100}%`,
+                            backgroundColor: genre.color
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-white text-sm w-12">{genre.value}</span>
                     </div>
-                    <span className="text-white text-sm w-12">{genre.value}</span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Duration */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Duration</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setDurationZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(durationZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setDurationZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {durationData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">{item.name}</span>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-24 bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="h-2 rounded-full transition-all duration-500"
-                        style={{ 
-                          width: `${(item.value / Math.max(...durationData.map(d => d.value))) * 100}%`,
-                          backgroundColor: item.color
-                        }}
-                      ></div>
+            <div style={{ transform: `scale(${durationZoom})`, transformOrigin: 'center' }}>
+              <div className="space-y-3">
+                {durationData.map((item, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-gray-300 text-sm">{item.name}</span>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="h-2 rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${(item.value / Math.max(...durationData.map(d => d.value))) * 100}%`,
+                            backgroundColor: item.color
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-white text-sm w-12">{item.value}</span>
                     </div>
-                    <span className="text-white text-sm w-12">{item.value}</span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* View Rating */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">View Rating</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setRatingZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(ratingZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setRatingZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={ratingData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  dataKey="value"
-                  animationBegin={200}
-                  animationDuration={800}
-                >
-                  {ratingData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                  formatter={(value) => [`${value}%`, 'Percentage']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ transform: `scale(${ratingZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={ratingData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {ratingData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                    formatter={(value) => [`${value}%`, 'Percentage']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
