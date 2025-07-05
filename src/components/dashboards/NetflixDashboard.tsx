@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend } from 'recharts';
 import { useState } from 'react';
 import { Film, Tv, ZoomIn, ZoomOut, Filter } from 'lucide-react';
 
@@ -17,20 +17,21 @@ const NetflixDashboard = () => {
   const [genreZoom, setGenreZoom] = useState(1);
   const [yearlyZoom, setYearlyZoom] = useState(1);
   const [ratingZoom, setRatingZoom] = useState(1);
+  const [regionZoom, setRegionZoom] = useState(1);
   const [durationZoom, setDurationZoom] = useState(1);
 
   // Netflix shows data
   const netflixShows = [
-    { id: '1', title: 'Stranger Things', type: 'TV Show', genre: 'Horror', year: 2016, rating: 'TV-14', imdbScore: 8.7 },
-    { id: '2', title: 'The Crown', type: 'TV Show', genre: 'Drama', year: 2016, rating: 'TV-MA', imdbScore: 8.7 },
-    { id: '3', title: 'Red Notice', type: 'Movie', genre: 'Action', year: 2021, rating: 'PG-13', imdbScore: 6.4 },
-    { id: '4', title: 'Squid Game', type: 'TV Show', genre: 'Drama', year: 2021, rating: 'TV-MA', imdbScore: 8.0 },
-    { id: '5', title: 'Extraction', type: 'Movie', genre: 'Action', year: 2020, rating: 'R', imdbScore: 6.7 },
-    { id: '6', title: 'Bridgerton', type: 'TV Show', genre: 'Romance', year: 2020, rating: 'TV-MA', imdbScore: 7.3 },
-    { id: '7', title: 'The Witcher', type: 'TV Show', genre: 'Fantasy', year: 2019, rating: 'TV-MA', imdbScore: 8.2 },
-    { id: '8', title: 'Money Heist', type: 'TV Show', genre: 'Crime', year: 2017, rating: 'TV-MA', imdbScore: 8.3 },
-    { id: '9', title: 'Ozark', type: 'TV Show', genre: 'Crime', year: 2017, rating: 'TV-MA', imdbScore: 8.4 },
-    { id: '10', title: 'The Umbrella Academy', type: 'TV Show', genre: 'Superhero', year: 2019, rating: 'TV-14', imdbScore: 7.9 }
+    { id: '1', title: 'Stranger Things', type: 'TV Show', genre: 'Horror', year: 2016, rating: 'TV-14', imdbScore: 8.7, duration: '51 min', country: 'United States', dateAdded: 'July 15, 2016' },
+    { id: '2', title: 'The Crown', type: 'TV Show', genre: 'Drama', year: 2016, rating: 'TV-MA', imdbScore: 8.7, duration: '58 min', country: 'United Kingdom', dateAdded: 'November 4, 2016' },
+    { id: '3', title: 'Red Notice', type: 'Movie', genre: 'Action', year: 2021, rating: 'PG-13', imdbScore: 6.4, duration: '118 min', country: 'United States', dateAdded: 'November 12, 2021' },
+    { id: '4', title: 'Squid Game', type: 'TV Show', genre: 'Drama', year: 2021, rating: 'TV-MA', imdbScore: 8.0, duration: '54 min', country: 'South Korea', dateAdded: 'September 17, 2021' },
+    { id: '5', title: 'Extraction', type: 'Movie', genre: 'Action', year: 2020, rating: 'R', imdbScore: 6.7, duration: '116 min', country: 'United States', dateAdded: 'April 24, 2020' },
+    { id: '6', title: 'Bridgerton', type: 'TV Show', genre: 'Romance', year: 2020, rating: 'TV-MA', imdbScore: 7.3, duration: '62 min', country: 'United Kingdom', dateAdded: 'December 25, 2020' },
+    { id: '7', title: 'The Witcher', type: 'TV Show', genre: 'Fantasy', year: 2019, rating: 'TV-MA', imdbScore: 8.2, duration: '60 min', country: 'United States', dateAdded: 'December 20, 2019' },
+    { id: '8', title: 'Money Heist', type: 'TV Show', genre: 'Crime', year: 2017, rating: 'TV-MA', imdbScore: 8.3, duration: '67 min', country: 'Spain', dateAdded: 'October 2, 2017' },
+    { id: '9', title: 'Ozark', type: 'TV Show', genre: 'Crime', year: 2017, rating: 'TV-MA', imdbScore: 8.4, duration: '60 min', country: 'United States', dateAdded: 'July 21, 2017' },
+    { id: '10', title: 'The Umbrella Academy', type: 'TV Show', genre: 'Superhero', year: 2019, rating: 'TV-14', imdbScore: 7.9, duration: '55 min', country: 'Canada', dateAdded: 'February 15, 2019' }
   ];
 
   // Filter data based on selections
@@ -59,7 +60,7 @@ const NetflixDashboard = () => {
   const genreData = Object.entries(genreStats).map(([genre, count], index) => ({
     name: genre,
     value: count,
-    color: ['#E50914', '#B91C1C', '#DC2626', '#EF4444', '#F87171', '#FCA5A5', '#FECACA'][index % 7]
+    fill: ['#E50914', '#B91C1C', '#DC2626', '#EF4444', '#F87171', '#FCA5A5', '#FECACA'][index % 7]
   }));
 
   // Yearly release data
@@ -82,16 +83,28 @@ const NetflixDashboard = () => {
   const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
     name: rating,
     value: count,
-    percentage: filteredShows.length > 0 ? ((count / filteredShows.length) * 100).toFixed(1) : '0',
-    color: ['#E50914', '#B91C1C', '#DC2626', '#EF4444', '#F87171'][index % 5]
+    fill: ['#E50914', '#B91C1C', '#DC2626', '#EF4444', '#F87171'][index % 5]
   }));
 
-  // Show duration data
-  const durationData = [
-    { duration: '< 30 min', percentage: 14.22, count: Math.floor(kpiData.totalShows * 0.1422) },
-    { duration: '30-60 min', percentage: 59.87, count: Math.floor(kpiData.totalShows * 0.5987) },
-    { duration: '60-90 min', percentage: 24.17, count: Math.floor(kpiData.totalShows * 0.2417) },
-    { duration: '> 90 min', percentage: 1.77, count: Math.floor(kpiData.totalShows * 0.0177) }
+  // Region data
+  const regionStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+    acc[show.country] = (acc[show.country] || 0) + 1;
+    return acc;
+  }, {});
+
+  const regionData = Object.entries(regionStats).map(([country, count]) => ({
+    name: country,
+    value: count,
+    year: 2021
+  }));
+
+  // Area chart data for content over time
+  const areaData = [
+    { year: '2016', movies: 1, series: 2, total: 3 },
+    { year: '2017', movies: 1, series: 4, total: 5 },
+    { year: '2019', movies: 1, series: 6, total: 7 },
+    { year: '2020', movies: 2, series: 7, total: 9 },
+    { year: '2021', movies: 3, series: 8, total: 11 }
   ];
 
   const genres = ['All', ...Array.from(new Set(netflixShows.map(show => show.genre)))];
@@ -195,21 +208,29 @@ const NetflixDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <div>
-                <span className="text-gray-400 text-sm">Type</span>
-                <p className="text-white font-semibold">{selectedShowData.type}</p>
-              </div>
-              <div>
-                <span className="text-gray-400 text-sm">Genre</span>
-                <p className="text-white font-semibold">{selectedShowData.genre}</p>
-              </div>
-              <div>
-                <span className="text-gray-400 text-sm">Year</span>
+                <span className="text-red-400 text-sm font-medium">Release Year</span>
                 <p className="text-white font-semibold">{selectedShowData.year}</p>
               </div>
               <div>
-                <span className="text-gray-400 text-sm">IMDb Score</span>
+                <span className="text-red-400 text-sm font-medium">Duration</span>
+                <p className="text-white font-semibold">{selectedShowData.duration}</p>
+              </div>
+              <div>
+                <span className="text-red-400 text-sm font-medium">Genre</span>
+                <p className="text-white font-semibold">{selectedShowData.genre}</p>
+              </div>
+              <div>
+                <span className="text-red-400 text-sm font-medium">Rating</span>
+                <p className="text-white font-semibold">{selectedShowData.rating}</p>
+              </div>
+              <div>
+                <span className="text-red-400 text-sm font-medium">Date Added</span>
+                <p className="text-white font-semibold">{selectedShowData.dateAdded}</p>
+              </div>
+              <div>
+                <span className="text-red-400 text-sm font-medium">IMDb Score</span>
                 <p className="text-yellow-400 font-bold">{selectedShowData.imdbScore}</p>
               </div>
             </div>
@@ -287,11 +308,11 @@ const NetflixDashboard = () => {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={120}
-                    paddingAngle={5}
+                    paddingAngle={0}
                     dataKey="value"
                   >
                     {genreData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="#1f2937" strokeWidth={2} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -301,6 +322,11 @@ const NetflixDashboard = () => {
                       borderRadius: '8px',
                       color: '#fff'
                     }} 
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    wrapperStyle={{ color: '#fff', fontSize: '12px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -349,8 +375,9 @@ const NetflixDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Bar dataKey="movies" fill="#E50914" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="series" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                  <Legend />
+                  <Bar dataKey="movies" fill="#E50914" radius={[2, 2, 0, 0]} name="Movies" />
+                  <Bar dataKey="series" fill="#3B82F6" radius={[2, 2, 0, 0]} name="TV Shows" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -380,11 +407,11 @@ const NetflixDashboard = () => {
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
-                    paddingAngle={5}
+                    paddingAngle={0}
                     dataKey="value"
                   >
                     {ratingData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="#1f2937" strokeWidth={2} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -394,9 +421,112 @@ const NetflixDashboard = () => {
                       borderRadius: '8px',
                       color: '#fff'
                     }} 
-                    formatter={(value, name) => [value, name]}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    wrapperStyle={{ color: '#fff', fontSize: '12px' }}
                   />
                 </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Area Chart and Region Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Content Growth Area Chart */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Content Growth Over Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={areaData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="year" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Legend />
+                <Area 
+                  type="monotone" 
+                  dataKey="total" 
+                  stackId="1" 
+                  stroke="#E50914" 
+                  fill="#E50914" 
+                  fillOpacity={0.6}
+                  name="Total Content"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="series" 
+                  stackId="2" 
+                  stroke="#3B82F6" 
+                  fill="#3B82F6" 
+                  fillOpacity={0.6}
+                  name="TV Shows"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="movies" 
+                  stackId="3" 
+                  stroke="#F59E0B" 
+                  fill="#F59E0B" 
+                  fillOpacity={0.6}
+                  name="Movies"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Region Distribution */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Content by Region</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setRegionZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(regionZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setRegionZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={regionData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#E50914" 
+                    strokeWidth={3}
+                    dot={{ fill: '#E50914', strokeWidth: 2, r: 6 }}
+                    name="Content Count"
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -420,7 +550,12 @@ const NetflixDashboard = () => {
         <CardContent>
           <div style={{ transform: `scale(${durationZoom})`, transformOrigin: 'center' }}>
             <div className="space-y-4">
-              {durationData.map((item, index) => (
+              {[
+                { duration: '< 30 min', percentage: 14.22, count: Math.floor(kpiData.totalShows * 0.1422) },
+                { duration: '30-60 min', percentage: 59.87, count: Math.floor(kpiData.totalShows * 0.5987) },
+                { duration: '60-90 min', percentage: 24.17, count: Math.floor(kpiData.totalShows * 0.2417) },
+                { duration: '> 90 min', percentage: 1.77, count: Math.floor(kpiData.totalShows * 0.0177) }
+              ].map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <span className="text-gray-300">{item.duration}</span>
                   <div className="flex items-center space-x-3">

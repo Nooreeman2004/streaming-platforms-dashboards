@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend } from 'recharts';
 import { useState } from 'react';
 import { Film, Tv, ZoomIn, ZoomOut, Filter } from 'lucide-react';
 
@@ -17,20 +17,21 @@ const DisneyDashboard = () => {
   const [genreZoom, setGenreZoom] = useState(1);
   const [yearlyZoom, setYearlyZoom] = useState(1);
   const [ratingZoom, setRatingZoom] = useState(1);
+  const [regionZoom, setRegionZoom] = useState(1);
   const [durationZoom, setDurationZoom] = useState(1);
 
   // Disney+ shows data
   const disneyShows = [
-    { id: '1', title: 'The Mandalorian', type: 'TV Show', genre: 'Action-Adventure', year: 2019, rating: 'TV-14', imdbScore: 8.7 },
-    { id: '2', title: 'WandaVision', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-PG', imdbScore: 7.9 },
-    { id: '3', title: 'Soul', type: 'Movie', genre: 'Animation', year: 2020, rating: 'PG', imdbScore: 8.1 },
-    { id: '4', title: 'Luca', type: 'Movie', genre: 'Animation', year: 2021, rating: 'PG', imdbScore: 7.4 },
-    { id: '5', title: 'Falcon and Winter Soldier', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-14', imdbScore: 7.2 },
-    { id: '6', title: 'Cruella', type: 'Movie', genre: 'Comedy', year: 2021, rating: 'PG-13', imdbScore: 7.3 },
-    { id: '7', title: 'Encanto', type: 'Movie', genre: 'Animation', year: 2021, rating: 'PG', imdbScore: 7.2 },
-    { id: '8', title: 'Turning Red', type: 'Movie', genre: 'Animation', year: 2022, rating: 'PG', imdbScore: 7.0 },
-    { id: '9', title: 'High School Musical: The Musical', type: 'TV Show', genre: 'Comedy', year: 2019, rating: 'TV-G', imdbScore: 7.1 },
-    { id: '10', title: 'The Book of Boba Fett', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-14', imdbScore: 7.2 }
+    { id: '1', title: 'The Mandalorian', type: 'TV Show', genre: 'Action-Adventure', year: 2019, rating: 'TV-14', imdbScore: 8.7, duration: '40 min', country: 'United States', dateAdded: 'November 12, 2019' },
+    { id: '2', title: 'WandaVision', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-PG', imdbScore: 7.9, duration: '35 min', country: 'United States', dateAdded: 'January 15, 2021' },
+    { id: '3', title: 'Soul', type: 'Movie', genre: 'Animation', year: 2020, rating: 'PG', imdbScore: 8.1, duration: '100 min', country: 'United States', dateAdded: 'December 25, 2020' },
+    { id: '4', title: 'Luca', type: 'Movie', genre: 'Animation', year: 2021, rating: 'PG', imdbScore: 7.4, duration: '95 min', country: 'United States', dateAdded: 'June 18, 2021' },
+    { id: '5', title: 'Falcon and Winter Soldier', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-14', imdbScore: 7.2, duration: '50 min', country: 'United States', dateAdded: 'March 19, 2021' },
+    { id: '6', title: 'Cruella', type: 'Movie', genre: 'Comedy', year: 2021, rating: 'PG-13', imdbScore: 7.3, duration: '134 min', country: 'United States', dateAdded: 'May 28, 2021' },
+    { id: '7', title: 'Encanto', type: 'Movie', genre: 'Animation', year: 2021, rating: 'PG', imdbScore: 7.2, duration: '102 min', country: 'United States', dateAdded: 'December 24, 2021' },
+    { id: '8', title: 'Turning Red', type: 'Movie', genre: 'Animation', year: 2022, rating: 'PG', imdbScore: 7.0, duration: '100 min', country: 'United States', dateAdded: 'March 11, 2022' },
+    { id: '9', title: 'High School Musical: The Musical', type: 'TV Show', genre: 'Comedy', year: 2019, rating: 'TV-G', imdbScore: 7.1, duration: '30 min', country: 'United States', dateAdded: 'November 12, 2019' },
+    { id: '10', title: 'The Book of Boba Fett', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-14', imdbScore: 7.2, duration: '45 min', country: 'United States', dateAdded: 'December 29, 2021' }
   ];
 
   // Filter data based on selections
@@ -59,7 +60,7 @@ const DisneyDashboard = () => {
   const genreData = Object.entries(genreStats).map(([genre, count], index) => ({
     name: genre,
     value: count,
-    color: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE'][index % 5]
+    fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE'][index % 5]
   }));
 
   // Yearly release data
@@ -82,18 +83,27 @@ const DisneyDashboard = () => {
   const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
     name: rating,
     value: count,
-    percentage: filteredShows.length > 0 ? ((count / filteredShows.length) * 100).toFixed(1) : '0',
-    color: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE'][index % 5]
+    fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE'][index % 5]
   }));
 
-  // Duration data
-  const durationData = [
-    { name: '1 min', value: 45, color: '#8B5CF6' },
-    { name: '1 Season', value: 120, color: '#A855F7' },
-    { name: '10 min', value: 80, color: '#C084FC' },
-    { name: '10 Seasons', value: 25, color: '#DDD6FE' },
-    { name: '100 min', value: 60, color: '#EDE9FE' },
-    { name: '101 min', value: 35, color: '#F3F4F6' }
+  // Region data
+  const regionStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+    acc[show.country] = (acc[show.country] || 0) + 1;
+    return acc;
+  }, {});
+
+  const regionData = Object.entries(regionStats).map(([country, count]) => ({
+    name: country,
+    value: count,
+    year: 2021
+  }));
+
+  // Area chart data for content over time
+  const areaData = [
+    { year: '2019', movies: 0, series: 2, total: 2 },
+    { year: '2020', movies: 1, series: 2, total: 3 },
+    { year: '2021', movies: 4, series: 5, total: 9 },
+    { year: '2022', movies: 5, series: 5, total: 10 }
   ];
 
   const genres = ['All', ...Array.from(new Set(disneyShows.map(show => show.genre)))];
@@ -197,21 +207,29 @@ const DisneyDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <div>
-                <span className="text-gray-400 text-sm">Type</span>
-                <p className="text-white font-semibold">{selectedShowData.type}</p>
-              </div>
-              <div>
-                <span className="text-gray-400 text-sm">Genre</span>
-                <p className="text-white font-semibold">{selectedShowData.genre}</p>
-              </div>
-              <div>
-                <span className="text-gray-400 text-sm">Year</span>
+                <span className="text-purple-400 text-sm font-medium">Release Year</span>
                 <p className="text-white font-semibold">{selectedShowData.year}</p>
               </div>
               <div>
-                <span className="text-gray-400 text-sm">IMDb Score</span>
+                <span className="text-purple-400 text-sm font-medium">Duration</span>
+                <p className="text-white font-semibold">{selectedShowData.duration}</p>
+              </div>
+              <div>
+                <span className="text-purple-400 text-sm font-medium">Genre</span>
+                <p className="text-white font-semibold">{selectedShowData.genre}</p>
+              </div>
+              <div>
+                <span className="text-purple-400 text-sm font-medium">Rating</span>
+                <p className="text-white font-semibold">{selectedShowData.rating}</p>
+              </div>
+              <div>
+                <span className="text-purple-400 text-sm font-medium">Date Added</span>
+                <p className="text-white font-semibold">{selectedShowData.dateAdded}</p>
+              </div>
+              <div>
+                <span className="text-purple-400 text-sm font-medium">IMDb Score</span>
                 <p className="text-yellow-400 font-bold">{selectedShowData.imdbScore}</p>
               </div>
             </div>
@@ -282,10 +300,10 @@ const DisneyDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={genreData} layout="horizontal">
+                <LineChart data={genreData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis type="number" stroke="#9CA3AF" />
-                  <YAxis dataKey="name" type="category" stroke="#9CA3AF" width={100} />
+                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
+                  <YAxis stroke="#9CA3AF" />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
@@ -294,8 +312,16 @@ const DisneyDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Bar dataKey="value" fill="#8B5CF6" radius={[0, 2, 2, 0]} />
-                </BarChart>
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#8B5CF6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 6 }}
+                    name="Genre Count"
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -342,8 +368,9 @@ const DisneyDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Bar dataKey="movies" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="series" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                  <Legend />
+                  <Bar dataKey="movies" fill="#8B5CF6" radius={[2, 2, 0, 0]} name="Movies" />
+                  <Bar dataKey="series" fill="#3B82F6" radius={[2, 2, 0, 0]} name="TV Shows" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -373,11 +400,11 @@ const DisneyDashboard = () => {
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
-                    paddingAngle={5}
+                    paddingAngle={0}
                     dataKey="value"
                   >
                     {ratingData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="#1f2937" strokeWidth={2} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -387,7 +414,11 @@ const DisneyDashboard = () => {
                       borderRadius: '8px',
                       color: '#fff'
                     }} 
-                    formatter={(value, name) => [value, name]}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    wrapperStyle={{ color: '#fff', fontSize: '12px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -396,10 +427,109 @@ const DisneyDashboard = () => {
         </Card>
       </div>
 
-      {/* Duration Distribution */}
+      {/* Area Chart and Region Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Content Growth Area Chart */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Content Growth Over Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={areaData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="year" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Legend />
+                <Area 
+                  type="monotone" 
+                  dataKey="total" 
+                  stackId="1" 
+                  stroke="#8B5CF6" 
+                  fill="#8B5CF6" 
+                  fillOpacity={0.6}
+                  name="Total Content"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="series" 
+                  stackId="2" 
+                  stroke="#3B82F6" 
+                  fill="#3B82F6" 
+                  fillOpacity={0.6}
+                  name="TV Shows"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="movies" 
+                  stackId="3" 
+                  stroke="#A855F7" 
+                  fill="#A855F7" 
+                  fillOpacity={0.6}
+                  name="Movies"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Region Distribution */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Content by Region</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setRegionZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(regionZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setRegionZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={regionData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#8B5CF6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 6 }}
+                    name="Content Count"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Show Duration Distribution */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-white">Duration Distribution</CardTitle>
+          <CardTitle className="text-white">Show Duration Distribution</CardTitle>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={() => setDurationZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
               <ZoomOut className="h-3 w-3" />
@@ -412,22 +542,27 @@ const DisneyDashboard = () => {
         </CardHeader>
         <CardContent>
           <div style={{ transform: `scale(${durationZoom})`, transformOrigin: 'center' }}>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={durationData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-                <Bar dataKey="value" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-4">
+              {[
+                { duration: '< 30 min', percentage: 20, count: Math.floor(kpiData.totalShows * 0.2) },
+                { duration: '30-60 min', percentage: 50, count: Math.floor(kpiData.totalShows * 0.5) },
+                { duration: '60-90 min', percentage: 20, count: Math.floor(kpiData.totalShows * 0.2) },
+                { duration: '> 90 min', percentage: 10, count: Math.floor(kpiData.totalShows * 0.1) }
+              ].map((item, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <span className="text-gray-300">{item.duration}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-32 bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${item.percentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-white text-sm w-12">{item.percentage}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
