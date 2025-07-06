@@ -108,29 +108,36 @@ const AmazonDashboard = () => {
     '#FEE2E2'  // red-100
   ];
 
-  const genreData = Object.entries(genreStats).map(([genre, count], index) => ({
-    name: genre,
-    value: count,
-    fill: getRedVariations()[index % 5]
-  }));
+  const genreData = [
+    { genre: 'Action', count: 1654, percentage: 22, color: '#2563EB' },
+    { genre: 'Drama', count: 1434, percentage: 19, color: '#3B82F6' },
+    { genre: 'Comedy', count: 1256, percentage: 17, color: '#60A5FA' },
+    { genre: 'Documentary', count: 1287, percentage: 17, color: '#93C5FD' },
+    { genre: 'Thriller', count: 876, percentage: 12, color: '#BFDBFE' },
+    { genre: 'Horror', count: 567, percentage: 8, color: '#DBEAFE' },
+    { genre: 'Romance', count: 454, percentage: 6, color: '#EFF6FF' }
+  ];
 
-  const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
-    name: rating,
-    value: count,
-    fill: getRedVariations()[index % 5]
-  }));
+  const ratingDistribution = [
+    { rating: 'G', count: 380, color: '#1E40AF' },
+    { rating: 'PG', count: 620, color: '#2563EB' },
+    { rating: 'PG-13', count: 1890, color: '#3B82F6' },
+    { rating: 'R', count: 1654, color: '#60A5FA' },
+    { rating: 'TV-MA', count: 2800, color: '#93C5FD' },
+    { rating: 'TV-14', count: 2340, color: '#BFDBFE' }
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
-            <Play className="h-8 w-8" />
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            P
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-white">Amazon Prime Dashboard</h2>
-            <p className="text-gray-400">Full Insights & Analytics</p>
+            <h2 className="text-3xl font-bold text-white">Amazon Prime Video Analytics</h2>
+            <p className="text-gray-400">9,684+ titles across 240+ countries</p>
           </div>
         </div>
       </div>
@@ -292,11 +299,11 @@ const AmazonDashboard = () => {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Genre Distribution */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Genre</CardTitle>
+            <CardTitle className="text-white">Content by Genre</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -312,7 +319,7 @@ const AmazonDashboard = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={genreData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
+                  <XAxis dataKey="genre" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
                   <Tooltip 
                     contentStyle={{ 
@@ -322,74 +329,17 @@ const AmazonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#DC2626" 
-                    strokeWidth={3}
-                    dot={{ fill: '#DC2626', strokeWidth: 2, r: 6 }}
-                    name="Genre Count"
-                  />
+                  <Line type="monotone" dataKey="count" stroke="#2563EB" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Yearly Release */}
+        {/* Rating Distribution */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-white">Yearly Release</CardTitle>
-              <div className="flex space-x-4 text-sm mt-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-300">Movies</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-cyan-500 rounded-full"></div>
-                  <span className="text-gray-300">TV Shows</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => setYearlyZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
-                <ZoomOut className="h-3 w-3" />
-              </Button>
-              <span className="text-gray-300 text-xs">{Math.round(yearlyZoom * 100)}%</span>
-              <Button variant="outline" size="sm" onClick={() => setYearlyZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
-                <ZoomIn className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div style={{ transform: `scale(${yearlyZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={yearlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="year" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#fff'
-                    }} 
-                  />
-                  <Legend />
-                  <Bar dataKey="movies" fill="#1F77B4" radius={[2, 2, 0, 0]} name="Movies" />
-                  <Bar dataKey="series" fill="#06B6D4" radius={[2, 2, 0, 0]} name="TV Shows" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* View Rating - Updated with red variations */}
-        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">View Rating</CardTitle>
+            <CardTitle className="text-white">View Ratings Distribution</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setRatingZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -403,19 +353,10 @@ const AmazonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${ratingZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={ratingData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={120}
-                    paddingAngle={0}
-                    dataKey="value"
-                  >
-                    {ratingData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
-                    ))}
-                  </Pie>
+                <BarChart data={ratingDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="rating" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
@@ -424,16 +365,9 @@ const AmazonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                </PieChart>
+                  <Bar dataKey="count" fill="#2563EB" radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center flex-wrap gap-2 mt-4">
-              {ratingData.map((entry, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.fill }}></div>
-                  <span className="text-gray-300 text-sm">{entry.name}</span>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>

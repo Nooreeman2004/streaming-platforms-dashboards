@@ -1,11 +1,10 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, AreaChart, Area, ComposedChart } from 'recharts';
 import { useState } from 'react';
-import { ZoomIn, ZoomOut, TrendingUp, Target, Users, Award, Filter, Globe } from 'lucide-react';
+import { ZoomIn, ZoomOut, TrendingUp, Target, Users, Award, Filter, Globe, DollarSign, Clock, Star } from 'lucide-react';
 
 const ComparisonDashboard = () => {
   const [zoom, setZoom] = useState(1);
@@ -27,8 +26,8 @@ const ComparisonDashboard = () => {
   const [selectedContentType, setSelectedContentType] = useState('all');
 
   const platformData = [
-    { platform: 'Netflix', totalShows: 13500, movies: 10400, series: 3100, color: '#E50914', subscribers: 230, revenue: 31.6 },
-    { platform: 'Amazon Prime', totalShows: 9684, movies: 7814, series: 1854, color: '#FF9500', subscribers: 200, revenue: 25.0 },
+    { platform: 'Netflix', totalShows: 13500, movies: 10400, series: 3100, color: '#DC2626', subscribers: 230, revenue: 31.6 },
+    { platform: 'Amazon Prime', totalShows: 9684, movies: 7814, series: 1854, color: '#2563EB', subscribers: 200, revenue: 25.0 },
     { platform: 'Disney+', totalShows: 1450, movies: 1052, series: 398, color: '#8B5CF6', subscribers: 118, revenue: 7.4 }
   ];
 
@@ -43,9 +42,9 @@ const ComparisonDashboard = () => {
   ];
 
   const marketShare = [
-    { name: 'Netflix', value: 54.8, color: '#E50914' },
-    { name: 'Amazon Prime', value: 39.3, color: '#FF9500' },
-    { name: 'Disney+', value: 5.9, color: '#00D4FF' }
+    { name: 'Netflix', value: 54.8, color: '#DC2626' },
+    { name: 'Amazon Prime', value: 39.3, color: '#2563EB' },
+    { name: 'Disney+', value: 5.9, color: '#8B5CF6' }
   ];
 
   const yearlyGrowth = [
@@ -98,6 +97,37 @@ const ComparisonDashboard = () => {
     { country: 'South Korea', Netflix: 8.6, Amazon: 7.5, Disney: 8.0, subscribers: 3000000 }
   ];
 
+  // New data for additional charts
+  const contentProductionCost = [
+    { platform: 'Netflix', avgBudget: 8.5, originalBudget: 12.2, totalSpend: 17.3 },
+    { platform: 'Amazon Prime', avgBudget: 9.2, originalBudget: 14.5, totalSpend: 13.7 },
+    { platform: 'Disney+', avgBudget: 15.8, originalBudget: 28.4, totalSpend: 8.9 }
+  ];
+
+  const contentReleaseSchedule = [
+    { month: 'Jan', Netflix: 45, Amazon: 32, Disney: 8 },
+    { month: 'Feb', Netflix: 38, Amazon: 28, Disney: 12 },
+    { month: 'Mar', Netflix: 52, Amazon: 35, Disney: 15 },
+    { month: 'Apr', Netflix: 41, Amazon: 30, Disney: 9 },
+    { month: 'May', Netflix: 48, Amazon: 33, Disney: 18 },
+    { month: 'Jun', Netflix: 44, Amazon: 29, Disney: 11 },
+    { month: 'Jul', Netflix: 39, Amazon: 31, Disney: 14 },
+    { month: 'Aug', Netflix: 46, Amazon: 34, Disney: 16 },
+    { month: 'Sep', Netflix: 43, Amazon: 27, Disney: 13 },
+    { month: 'Oct', Netflix: 50, Amazon: 36, Disney: 20 },
+    { month: 'Nov', Netflix: 47, Amazon: 32, Disney: 17 },
+    { month: 'Dec', Netflix: 49, Amazon: 38, Disney: 22 }
+  ];
+
+  const avgWatchTimeByGenre = [
+    { genre: 'Drama', Netflix: 58, Amazon: 52, Disney: 48 },
+    { genre: 'Action', Netflix: 45, Amazon: 47, Disney: 43 },
+    { genre: 'Comedy', Netflix: 32, Amazon: 28, Disney: 35 },
+    { genre: 'Documentary', Netflix: 67, Amazon: 72, Disney: 65 },
+    { genre: 'Animation', Netflix: 38, Amazon: 35, Disney: 55 },
+    { genre: 'Horror', Netflix: 41, Amazon: 39, Disney: 30 }
+  ];
+
   // Filter data based on selections
   const getFilteredData = () => {
     let filteredGenreData = genreComparison;
@@ -112,7 +142,7 @@ const ComparisonDashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-gradient-to-r from-red-500 via-orange-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+          <div className="w-16 h-16 bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
             VS
           </div>
           <div>
@@ -252,7 +282,7 @@ const ComparisonDashboard = () => {
                 setSelectedRating('all');
                 setSelectedContentType('all');
               }}
-              className="bg-gradient-to-r from-red-500 via-orange-500 to-purple-500 text-white"
+              className="bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 text-white"
             >
               Reset All Filters
             </Button>
@@ -318,22 +348,14 @@ const ComparisonDashboard = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={[
-                      { name: 'Netflix', value: 54.8, color: '#E50914' },
-                      { name: 'Amazon Prime', value: 39.3, color: '#FF9500' },
-                      { name: 'Disney+', value: 5.9, color: '#8B5CF6' }
-                    ]}
+                    data={marketShare}
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
                     paddingAngle={0}
                     dataKey="value"
                   >
-                    {[
-                      { name: 'Netflix', value: 54.8, color: '#E50914' },
-                      { name: 'Amazon Prime', value: 39.3, color: '#FF9500' },
-                      { name: 'Disney+', value: 5.9, color: '#8B5CF6' }
-                    ].map((entry, index) => (
+                    {marketShare.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
@@ -351,11 +373,11 @@ const ComparisonDashboard = () => {
             </div>
             <div className="flex justify-center space-x-4 mt-4">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-red-600"></div>
                 <span className="text-gray-300 text-sm">Netflix</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
                 <span className="text-gray-300 text-sm">Amazon Prime</span>
               </div>
               <div className="flex items-center space-x-2">
@@ -386,13 +408,7 @@ const ComparisonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${growthZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={[
-                  { year: 2019, Netflix: 8500, Amazon: 6500, Disney: 500 },
-                  { year: 2020, Netflix: 11000, Amazon: 8000, Disney: 900 },
-                  { year: 2021, Netflix: 13500, Amazon: 9684, Disney: 1450 },
-                  { year: 2022, Netflix: 15000, Amazon: 11000, Disney: 1800 },
-                  { year: 2023, Netflix: 16500, Amazon: 12500, Disney: 2200 }
-                ]}>
+                <AreaChart data={yearlyGrowth}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="year" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
@@ -404,8 +420,8 @@ const ComparisonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Area type="monotone" dataKey="Netflix" stackId="1" stroke="#E50914" fill="#E50914" fillOpacity={0.6} />
-                  <Area type="monotone" dataKey="Amazon" stackId="1" stroke="#FF9500" fill="#FF9500" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="Netflix" stackId="1" stroke="#DC2626" fill="#DC2626" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="Amazon" stackId="1" stroke="#2563EB" fill="#2563EB" fillOpacity={0.6} />
                   <Area type="monotone" dataKey="Disney" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -414,7 +430,7 @@ const ComparisonDashboard = () => {
         </Card>
       </div>
 
-      {/* Global Platform Ratings Map - Updated without lines */}
+      {/* Global Platform Ratings Map */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white flex items-center space-x-2">
@@ -453,19 +469,19 @@ const ComparisonDashboard = () => {
                     color: '#fff'
                   }} 
                 />
-                <Bar dataKey="Netflix" fill="#E50914" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Amazon" fill="#FF9500" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Netflix" fill="#DC2626" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Amazon" fill="#2563EB" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="Disney" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center space-x-6 mt-4">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-red-600"></div>
               <span className="text-gray-300 text-sm">Netflix Rating</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
               <span className="text-gray-300 text-sm">Amazon Rating</span>
             </div>
             <div className="flex items-center space-x-2">
@@ -473,6 +489,102 @@ const ComparisonDashboard = () => {
               <span className="text-gray-300 text-sm">Disney+ Rating</span>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* New Charts Row - Content Production Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Content Production Budget */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <DollarSign className="h-5 w-5" />
+              <span>Content Production Budget (Billions $)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={contentProductionCost}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="platform" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Bar dataKey="avgBudget" fill="#4B5563" name="Avg Budget" />
+                <Bar dataKey="originalBudget" fill="#6B7280" name="Original Content" />
+                <Bar dataKey="totalSpend" fill="#9CA3AF" name="Total Annual Spend" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Release Schedule */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Clock className="h-5 w-5" />
+              <span>Monthly Content Release Pattern</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={contentReleaseSchedule}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="month" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Line type="monotone" dataKey="Netflix" stroke="#DC2626" strokeWidth={3} />
+                <Line type="monotone" dataKey="Amazon" stroke="#2563EB" strokeWidth={3} />
+                <Line type="monotone" dataKey="Disney" stroke="#8B5CF6" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Average Watch Time by Genre */}
+      <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <Star className="h-5 w-5" />
+            <span>Average Watch Time by Genre (minutes)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={350}>
+            <ComposedChart data={avgWatchTimeByGenre}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="genre" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1f2937', 
+                  border: '1px solid #374151',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }} 
+              />
+              <Bar dataKey="Netflix" fill="#DC2626" />
+              <Bar dataKey="Amazon" fill="#2563EB" />
+              <Bar dataKey="Disney" fill="#8B5CF6" />
+              <Line type="monotone" dataKey="Netflix" stroke="#EF4444" strokeWidth={2} />
+              <Line type="monotone" dataKey="Amazon" stroke="#3B82F6" strokeWidth={2} />
+              <Line type="monotone" dataKey="Disney" stroke="#A855F7" strokeWidth={2} />
+            </ComposedChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
 
@@ -510,8 +622,8 @@ const ComparisonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Line type="monotone" dataKey="Netflix" stroke="#E50914" strokeWidth={3} />
-                  <Line type="monotone" dataKey="Amazon" stroke="#00A8E1" strokeWidth={3} />
+                  <Line type="monotone" dataKey="Netflix" stroke="#DC2626" strokeWidth={3} />
+                  <Line type="monotone" dataKey="Amazon" stroke="#2563EB" strokeWidth={3} />
                   <Line type="monotone" dataKey="Disney" stroke="#8B5CF6" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
@@ -551,8 +663,8 @@ const ComparisonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Bar dataKey="Netflix" fill="#E50914" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="Amazon" fill="#00A8E1" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="Netflix" fill="#DC2626" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="Amazon" fill="#2563EB" radius={[2, 2, 0, 0]} />
                   <Bar dataKey="Disney" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -597,23 +709,23 @@ const ComparisonDashboard = () => {
                     color: '#fff'
                   }} 
                 />
-                <Bar dataKey="Netflix" fill="#E50914" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Amazon" fill="#FF9500" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Disney" fill="#00D4FF" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Netflix" fill="#DC2626" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Amazon" fill="#2563EB" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Disney" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center space-x-6 mt-4">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-red-600"></div>
               <span className="text-gray-300 text-sm">Netflix</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
               <span className="text-gray-300 text-sm">Amazon Prime</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
               <span className="text-gray-300 text-sm">Disney+</span>
             </div>
           </div>
@@ -652,8 +764,8 @@ const ComparisonDashboard = () => {
                   <PolarGrid stroke="#374151" />
                   <PolarAngleAxis dataKey="metric" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
                   <PolarRadiusAxis angle={0} domain={[0, 100]} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
-                  <Radar name="Netflix" dataKey="Netflix" stroke="#E50914" fill="#E50914" fillOpacity={0.2} />
-                  <Radar name="Amazon" dataKey="Amazon" stroke="#00A8E1" fill="#00A8E1" fillOpacity={0.2} />
+                  <Radar name="Netflix" dataKey="Netflix" stroke="#DC2626" fill="#DC2626" fillOpacity={0.2} />
+                  <Radar name="Amazon" dataKey="Amazon" stroke="#2563EB" fill="#2563EB" fillOpacity={0.2} />
                   <Radar name="Disney" dataKey="Disney" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.2} />
                   <Tooltip 
                     contentStyle={{ 
@@ -699,8 +811,8 @@ const ComparisonDashboard = () => {
                     }} 
                     cursor={{ strokeDasharray: '3 3' }}
                   />
-                  <Scatter name="Netflix" data={[{ dailyActiveUsers: 85, satisfaction: 4.2, platform: 'Netflix' }]} fill="#E50914" />
-                  <Scatter name="Amazon" data={[{ dailyActiveUsers: 67, satisfaction: 4.0, platform: 'Amazon Prime' }]} fill="#00A8E1" />
+                  <Scatter name="Netflix" data={[{ dailyActiveUsers: 85, satisfaction: 4.2, platform: 'Netflix' }]} fill="#DC2626" />
+                  <Scatter name="Amazon" data={[{ dailyActiveUsers: 67, satisfaction: 4.0, platform: 'Amazon Prime' }]} fill="#2563EB" />
                   <Scatter name="Disney" data={[{ dailyActiveUsers: 78, satisfaction: 4.5, platform: 'Disney+' }]} fill="#8B5CF6" />
                 </ScatterChart>
               </ResponsiveContainer>
