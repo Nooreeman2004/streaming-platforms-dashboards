@@ -124,11 +124,11 @@ const AmazonDashboard = () => {
 
   // New charts data
   const competitorAnalysisData = [
-    { platform: 'Amazon Prime', originals: 145, licensed: 8500, totalBudget: 850 },
-    { platform: 'Netflix', originals: 320, licensed: 12800, totalBudget: 1500 },
-    { platform: 'Disney+', originals: 89, licensed: 4200, totalBudget: 680 },
-    { platform: 'Hulu', originals: 78, licensed: 3800, totalBudget: 420 },
-    { platform: 'HBO Max', originals: 156, licensed: 5600, totalBudget: 920 }
+    { platform: 'Amazon Prime', originals: 145, licensed: 8500, totalBudget: 850, color: '#2563EB' },
+    { platform: 'Netflix', originals: 320, licensed: 12800, totalBudget: 1500, color: '#DC2626' },
+    { platform: 'Disney+', originals: 89, licensed: 4200, totalBudget: 680, color: '#7C3AED' },
+    { platform: 'Hulu', originals: 78, licensed: 3800, totalBudget: 420, color: '#059669' },
+    { platform: 'HBO Max', originals: 156, licensed: 5600, totalBudget: 920, color: '#DC2626' }
   ];
 
   const contentQualityData = [
@@ -321,7 +321,7 @@ const AmazonDashboard = () => {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Genre Distribution */}
+        {/* Genre Distribution - Donut Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content by Genre</CardTitle>
@@ -338,10 +338,20 @@ const AmazonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={genreData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="genre" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
+                <PieChart>
+                  <Pie
+                    data={genreData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={0}
+                    dataKey="count"
+                  >
+                    {genreData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
@@ -350,9 +360,16 @@ const AmazonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Line type="monotone" dataKey="count" stroke="#2563EB" strokeWidth={3} />
-                </LineChart>
+                </PieChart>
               </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
+              {genreData.map((genre, index) => (
+                <div key={genre.genre} className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: genre.color }}></div>
+                  <span className="text-gray-300">{genre.genre}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -448,7 +465,7 @@ const AmazonDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Region Distribution */}
+        {/* Region Distribution - Better visualization */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content by Region</CardTitle>
@@ -465,7 +482,7 @@ const AmazonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={regionData}>
+                <BarChart data={regionData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
                   <YAxis stroke="#9CA3AF" />
@@ -478,15 +495,8 @@ const AmazonDashboard = () => {
                     }} 
                   />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#2563EB" 
-                    strokeWidth={3}
-                    dot={{ fill: '#2563EB', strokeWidth: 2, r: 6 }}
-                    name="Content Count"
-                  />
-                </LineChart>
+                  <Bar dataKey="value" fill="#2563EB" radius={[4, 4, 0, 0]} name="Content Count" />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -495,10 +505,10 @@ const AmazonDashboard = () => {
 
       {/* New Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Competitor Analysis */}
+        {/* Competitor Analysis - Fixed with colors */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Streaming Platform Comparison</CardTitle>
+            <CardTitle className="text-white">Content Production Budget (Billions $)</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setCompetitorZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -525,8 +535,11 @@ const AmazonDashboard = () => {
                     }} 
                   />
                   <Legend />
-                  <Bar dataKey="originals" fill="#2563EB" name="Originals" />
-                  <Bar dataKey="totalBudget" fill="#60A5FA" name="Budget ($M)" />
+                  <Bar dataKey="totalBudget" radius={[4, 4, 0, 0]} name="Budget ($M)">
+                    {competitorAnalysisData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -654,13 +667,13 @@ const AmazonDashboard = () => {
       {/* About Shows */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">About Shows</CardTitle>
+          <CardTitle className="text-white">About Amazon Prime Originals</CardTitle>
         </CardHeader>
         <CardContent className="text-gray-300 text-sm space-y-2">
           <p>"The Boys" offers a dark and satirical take on the superhero genre, featuring complex characters and social commentary.</p>
           <p>"The Marvelous Mrs. Maisel" showcases brilliant writing and performances in this period comedy-drama series.</p>
           <p>"Jack Ryan" brings Tom Clancy's beloved character to life with intense action and political intrigue.</p>
-          <Badge variant="secondary" className="mt-2">Prime Originals</Badge>
+          <Badge variant="secondary" className="mt-2 bg-blue-500/20 text-blue-400">Prime Originals</Badge>
         </CardContent>
       </Card>
     </div>
