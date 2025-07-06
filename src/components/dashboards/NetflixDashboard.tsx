@@ -287,7 +287,7 @@ const NetflixDashboard = () => {
 
       {/* Charts Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Genre Distribution - Bar Chart instead of Pie */}
+        {/* Genre Distribution - Single color pie chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content by Genre</CardTitle>
@@ -304,10 +304,19 @@ const NetflixDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={genreData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="genre" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
+                <PieChart>
+                  <Pie
+                    data={genreData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    paddingAngle={2}
+                    dataKey="count"
+                  >
+                    {genreData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill="#DC2626" />
+                    ))}
+                  </Pie>
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
@@ -316,18 +325,21 @@ const NetflixDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {genreData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`hsl(0, 75%, ${65 - index * 5}%)`} />
-                    ))}
-                  </Bar>
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
+              {genreData.map((genre, index) => (
+                <div key={genre.genre} className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-red-600"></div>
+                  <span className="text-gray-300">{genre.genre}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Yearly Releases */}
+        {/* Yearly Releases - Area Chart instead of bar */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Yearly Content Releases</CardTitle>
@@ -344,7 +356,7 @@ const NetflixDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${yearlyZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={yearlyReleases}>
+                <AreaChart data={yearlyReleases}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="year" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
@@ -356,26 +368,17 @@ const NetflixDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Bar dataKey="Movies" fill="#DC2626" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="TV Shows" fill="#F472B6" radius={[2, 2, 0, 0]} />
-                </BarChart>
+                  <Legend />
+                  <Area type="monotone" dataKey="Movies" stackId="1" stroke="#DC2626" fill="#DC2626" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="TV Shows" stackId="1" stroke="#F472B6" fill="#F472B6" fillOpacity={0.8} />
+                </AreaChart>
               </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center space-x-4 mt-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-600"></div>
-                <span className="text-gray-300 text-sm">Movies</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-pink-400"></div>
-                <span className="text-gray-300 text-sm">TV Shows</span>
-              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Rating Distribution */}
+      {/* Rating Distribution - Line Chart instead of bar */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white">View Ratings Distribution</CardTitle>
@@ -392,7 +395,7 @@ const NetflixDashboard = () => {
         <CardContent>
           <div style={{ transform: `scale(${ratingZoom})`, transformOrigin: 'center' }}>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={ratingDistribution}>
+              <LineChart data={ratingDistribution}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="rating" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" />
@@ -404,8 +407,8 @@ const NetflixDashboard = () => {
                     color: '#fff'
                   }} 
                 />
-                <Bar dataKey="count" fill="#DC2626" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Line type="monotone" dataKey="count" stroke="#DC2626" strokeWidth={3} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

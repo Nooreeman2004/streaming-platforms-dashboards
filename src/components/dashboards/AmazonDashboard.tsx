@@ -1,8 +1,9 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend, ScatterChart, Scatter } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useState } from 'react';
 import { Film, Tv, ZoomIn, ZoomOut, Filter, Play } from 'lucide-react';
 
@@ -18,7 +19,6 @@ const AmazonDashboard = () => {
   const [ratingZoom, setRatingZoom] = useState(1);
   const [regionZoom, setRegionZoom] = useState(1);
   const [durationZoom, setDurationZoom] = useState(1);
-  const [competitorZoom, setCompetitorZoom] = useState(1);
   const [qualityZoom, setQualityZoom] = useState(1);
   const [seasonalZoom, setSeasonalZoom] = useState(1);
 
@@ -76,7 +76,7 @@ const AmazonDashboard = () => {
     return acc;
   }, {});
 
-  // Region data
+  // Region data - Custom visualization
   const regionStats = filteredShows.reduce((acc: Record<string, number>, show) => {
     acc[show.country] = (acc[show.country] || 0) + 1;
     return acc;
@@ -123,14 +123,6 @@ const AmazonDashboard = () => {
   ];
 
   // New charts data
-  const competitorAnalysisData = [
-    { platform: 'Amazon Prime', originals: 145, licensed: 8500, totalBudget: 850, color: '#2563EB' },
-    { platform: 'Netflix', originals: 320, licensed: 12800, totalBudget: 1500, color: '#DC2626' },
-    { platform: 'Disney+', originals: 89, licensed: 4200, totalBudget: 680, color: '#7C3AED' },
-    { platform: 'Hulu', originals: 78, licensed: 3800, totalBudget: 420, color: '#059669' },
-    { platform: 'HBO Max', originals: 156, licensed: 5600, totalBudget: 920, color: '#DC2626' }
-  ];
-
   const contentQualityData = [
     { genre: 'Drama', avgRating: 8.2, criticScore: 85, audienceScore: 78, viewerHours: 45000 },
     { genre: 'Action', avgRating: 7.8, criticScore: 76, audienceScore: 84, viewerHours: 52000 },
@@ -411,7 +403,7 @@ const AmazonDashboard = () => {
         </Card>
       </div>
 
-      {/* Area Chart and Region Chart */}
+      {/* Area Chart and Custom Region Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Growth Area Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -465,7 +457,7 @@ const AmazonDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Region Distribution - Better visualization */}
+        {/* Content by Region - Custom Progress Bar Visualization */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content by Region</CardTitle>
@@ -481,72 +473,37 @@ const AmazonDashboard = () => {
           </CardHeader>
           <CardContent>
             <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={regionData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
-                  <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#fff'
-                    }} 
-                  />
-                  <Legend />
-                  <Bar dataKey="value" fill="#2563EB" radius={[4, 4, 0, 0]} name="Content Count" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="space-y-6">
+                {regionData.map((region, index) => {
+                  const percentage = (region.value / filteredShows.length) * 100;
+                  return (
+                    <div key={region.name} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-300">{region.name}</span>
+                        <span className="text-blue-400 font-semibold">{region.value} shows</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-1000 flex items-center justify-end pr-2"
+                          style={{ width: `${Math.max(percentage, 5)}%` }}
+                        >
+                          <span className="text-white text-xs font-semibold">
+                            {percentage.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* New Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Competitor Analysis - Fixed with colors */}
-        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Content Production Budget (Billions $)</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => setCompetitorZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
-                <ZoomOut className="h-3 w-3" />
-              </Button>
-              <span className="text-gray-300 text-xs">{Math.round(competitorZoom * 100)}%</span>
-              <Button variant="outline" size="sm" onClick={() => setCompetitorZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
-                <ZoomIn className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div style={{ transform: `scale(${competitorZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={competitorAnalysisData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="platform" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
-                  <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#fff'
-                    }} 
-                  />
-                  <Legend />
-                  <Bar dataKey="totalBudget" radius={[4, 4, 0, 0]} name="Budget ($M)">
-                    {competitorAnalysisData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Content Quality Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Content Quality Analysis - Radar Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content Quality by Genre</CardTitle>
@@ -563,10 +520,26 @@ const AmazonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${qualityZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <ScatterChart data={contentQualityData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="avgRating" stroke="#9CA3AF" name="Rating" />
-                  <YAxis dataKey="viewerHours" stroke="#9CA3AF" name="Hours" />
+                <RadarChart data={contentQualityData}>
+                  <PolarGrid stroke="#374151" />
+                  <PolarAngleAxis dataKey="genre" tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                  <PolarRadiusAxis tick={{ fill: '#9CA3AF', fontSize: 10 }} />
+                  <Radar
+                    name="Average Rating"
+                    dataKey="avgRating"
+                    stroke="#2563EB"
+                    fill="#2563EB"
+                    fillOpacity={0.6}
+                    strokeWidth={2}
+                  />
+                  <Radar
+                    name="Critic Score"
+                    dataKey="criticScore"
+                    stroke="#60A5FA"
+                    fill="#60A5FA"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
@@ -575,8 +548,8 @@ const AmazonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Scatter name="Genre Performance" dataKey="viewerHours" fill="#2563EB" />
-                </ScatterChart>
+                  <Legend />
+                </RadarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
