@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend, ScatterChart, Scatter } from 'recharts';
 import { useState } from 'react';
 import { Film, Tv, ZoomIn, ZoomOut, Filter, Play } from 'lucide-react';
 
@@ -18,6 +18,9 @@ const AmazonDashboard = () => {
   const [ratingZoom, setRatingZoom] = useState(1);
   const [regionZoom, setRegionZoom] = useState(1);
   const [durationZoom, setDurationZoom] = useState(1);
+  const [competitorZoom, setCompetitorZoom] = useState(1);
+  const [qualityZoom, setQualityZoom] = useState(1);
+  const [seasonalZoom, setSeasonalZoom] = useState(1);
 
   // Amazon Prime shows data
   const amazonShows = [
@@ -99,15 +102,7 @@ const AmazonDashboard = () => {
   const years = ['All', ...Array.from(new Set(amazonShows.map(show => show.year.toString()))).sort().reverse()];
   const types = ['All', 'Movie', 'TV Show'];
 
-  // Updated pie chart colors with better red variations
-  const getRedVariations = () => [
-    '#DC2626', // red-600
-    '#EF4444', // red-500
-    '#F87171', // red-400
-    '#FCA5A5', // red-300
-    '#FEE2E2'  // red-100
-  ];
-
+  // Updated chart data with blue colors
   const genreData = [
     { genre: 'Action', count: 1654, percentage: 22, color: '#2563EB' },
     { genre: 'Drama', count: 1434, percentage: 19, color: '#3B82F6' },
@@ -125,6 +120,32 @@ const AmazonDashboard = () => {
     { rating: 'R', count: 1654, color: '#60A5FA' },
     { rating: 'TV-MA', count: 2800, color: '#93C5FD' },
     { rating: 'TV-14', count: 2340, color: '#BFDBFE' }
+  ];
+
+  // New charts data
+  const competitorAnalysisData = [
+    { platform: 'Amazon Prime', originals: 145, licensed: 8500, totalBudget: 850 },
+    { platform: 'Netflix', originals: 320, licensed: 12800, totalBudget: 1500 },
+    { platform: 'Disney+', originals: 89, licensed: 4200, totalBudget: 680 },
+    { platform: 'Hulu', originals: 78, licensed: 3800, totalBudget: 420 },
+    { platform: 'HBO Max', originals: 156, licensed: 5600, totalBudget: 920 }
+  ];
+
+  const contentQualityData = [
+    { genre: 'Drama', avgRating: 8.2, criticScore: 85, audienceScore: 78, viewerHours: 45000 },
+    { genre: 'Action', avgRating: 7.8, criticScore: 76, audienceScore: 84, viewerHours: 52000 },
+    { genre: 'Comedy', avgRating: 7.5, criticScore: 72, audienceScore: 81, viewerHours: 38000 },
+    { genre: 'Sci-Fi', avgRating: 8.1, criticScore: 82, audienceScore: 86, viewerHours: 41000 },
+    { genre: 'Fantasy', avgRating: 7.9, criticScore: 79, audienceScore: 82, viewerHours: 39000 }
+  ];
+
+  const seasonalTrendsData = [
+    { month: 'Jan', drama: 12000, action: 15000, comedy: 9000, scifi: 8500 },
+    { month: 'Feb', drama: 11500, action: 14200, comedy: 8800, scifi: 8200 },
+    { month: 'Mar', drama: 13000, action: 16500, comedy: 10200, scifi: 9100 },
+    { month: 'Apr', drama: 14500, action: 17800, comedy: 11000, scifi: 9800 },
+    { month: 'May', drama: 15200, action: 18500, comedy: 11800, scifi: 10200 },
+    { month: 'Jun', drama: 16000, action: 19200, comedy: 12500, scifi: 10800 }
   ];
 
   return (
@@ -399,8 +420,8 @@ const AmazonDashboard = () => {
                   type="monotone" 
                   dataKey="total" 
                   stackId="1" 
-                  stroke="#1F77B4" 
-                  fill="#1F77B4" 
+                  stroke="#2563EB" 
+                  fill="#2563EB" 
                   fillOpacity={0.6}
                   name="Total Content"
                 />
@@ -408,8 +429,8 @@ const AmazonDashboard = () => {
                   type="monotone" 
                   dataKey="series" 
                   stackId="2" 
-                  stroke="#06B6D4" 
-                  fill="#06B6D4" 
+                  stroke="#3B82F6" 
+                  fill="#3B82F6" 
                   fillOpacity={0.6}
                   name="TV Shows"
                 />
@@ -417,8 +438,8 @@ const AmazonDashboard = () => {
                   type="monotone" 
                   dataKey="movies" 
                   stackId="3" 
-                  stroke="#3B82F6" 
-                  fill="#3B82F6" 
+                  stroke="#60A5FA" 
+                  fill="#60A5FA" 
                   fillOpacity={0.6}
                   name="Movies"
                 />
@@ -460,11 +481,128 @@ const AmazonDashboard = () => {
                   <Line 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#1F77B4" 
+                    stroke="#2563EB" 
                     strokeWidth={3}
-                    dot={{ fill: '#1F77B4', strokeWidth: 2, r: 6 }}
+                    dot={{ fill: '#2563EB', strokeWidth: 2, r: 6 }}
                     name="Content Count"
                   />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* New Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Competitor Analysis */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Streaming Platform Comparison</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setCompetitorZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(competitorZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setCompetitorZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${competitorZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={competitorAnalysisData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="platform" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Legend />
+                  <Bar dataKey="originals" fill="#2563EB" name="Originals" />
+                  <Bar dataKey="totalBudget" fill="#60A5FA" name="Budget ($M)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Content Quality Analysis */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Content Quality by Genre</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setQualityZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(qualityZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setQualityZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${qualityZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <ScatterChart data={contentQualityData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="avgRating" stroke="#9CA3AF" name="Rating" />
+                  <YAxis dataKey="viewerHours" stroke="#9CA3AF" name="Hours" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Scatter name="Genre Performance" dataKey="viewerHours" fill="#2563EB" />
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Seasonal Trends */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Seasonal Viewing Trends</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setSeasonalZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(seasonalZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setSeasonalZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${seasonalZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={seasonalTrendsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="month" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="drama" stroke="#2563EB" strokeWidth={2} name="Drama" />
+                  <Line type="monotone" dataKey="action" stroke="#3B82F6" strokeWidth={2} name="Action" />
+                  <Line type="monotone" dataKey="comedy" stroke="#60A5FA" strokeWidth={2} name="Comedy" />
+                  <Line type="monotone" dataKey="scifi" stroke="#93C5FD" strokeWidth={2} name="Sci-Fi" />
                 </LineChart>
               </ResponsiveContainer>
             </div>

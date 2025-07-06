@@ -3,15 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, LineChart, Line } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, LineChart, Line, AreaChart, Area, Legend } from 'recharts';
 import { useState } from 'react';
-import { ZoomIn, ZoomOut } from 'lucide-react';
+import { ZoomIn, ZoomOut, Film, Tv } from 'lucide-react';
 
 const NetflixDashboard = () => {
   const [zoom, setZoom] = useState(1);
   const [genreZoom, setGenreZoom] = useState(1);
   const [yearlyZoom, setYearlyZoom] = useState(1);
   const [ratingZoom, setRatingZoom] = useState(1);
+  const [trendsZoom, setTrendsZoom] = useState(1);
+  const [performanceZoom, setPerformanceZoom] = useState(1);
+  const [budgetZoom, setBudgetZoom] = useState(1);
 
   const genreData = [
     { genre: 'Drama', count: 2567, percentage: 28 },
@@ -41,6 +44,34 @@ const NetflixDashboard = () => {
     { rating: 'TV-14', count: 2800, color: '#FEE2E2' }
   ];
 
+  // New charts data
+  const viewingTrendsData = [
+    { month: 'Jan', Drama: 12000, Comedy: 8500, Action: 9800, Documentary: 4200 },
+    { month: 'Feb', Drama: 13200, Comedy: 9100, Action: 10200, Documentary: 4800 },
+    { month: 'Mar', Drama: 14500, Comedy: 9800, Action: 11500, Documentary: 5200 },
+    { month: 'Apr', Drama: 15800, Comedy: 10500, Action: 12000, Documentary: 5800 },
+    { month: 'May', Drama: 16200, Comedy: 11200, Action: 12800, Documentary: 6100 },
+    { month: 'Jun', Drama: 17500, Comedy: 12000, Action: 13500, Documentary: 6500 }
+  ];
+
+  const contentPerformanceData = [
+    { title: 'Stranger Things', views: 95, rating: 8.7, engagement: 92 },
+    { title: 'The Crown', views: 78, rating: 8.6, engagement: 85 },
+    { title: 'Ozark', views: 82, rating: 8.4, engagement: 88 },
+    { title: 'Bridgerton', views: 89, rating: 7.3, engagement: 91 },
+    { title: 'Money Heist', views: 91, rating: 8.2, engagement: 89 },
+    { title: 'The Witcher', views: 85, rating: 8.2, engagement: 87 }
+  ];
+
+  const budgetVsRevenueData = [
+    { genre: 'Drama', budget: 45, revenue: 78, roi: 173 },
+    { genre: 'Action', budget: 85, revenue: 125, roi: 147 },
+    { genre: 'Comedy', budget: 35, revenue: 65, roi: 186 },
+    { genre: 'Sci-Fi', budget: 95, revenue: 140, roi: 147 },
+    { genre: 'Horror', budget: 25, revenue: 55, roi: 220 },
+    { genre: 'Romance', budget: 30, revenue: 52, roi: 173 }
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -66,7 +97,50 @@ const NetflixDashboard = () => {
         </div>
       </div>
 
-      {/* Filters and KPI cards */}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-red-600 to-red-700 border-0 text-white">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90">Total Content</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">13,500+</div>
+            <div className="text-sm opacity-70">Movies & Series</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
+          <CardHeader className="pb-2 flex flex-row items-center space-y-0">
+            <CardTitle className="text-sm font-medium opacity-90">Movies</CardTitle>
+            <Film className="h-4 w-4 ml-auto opacity-70" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-red-400">9,200</div>
+            <div className="text-sm opacity-70">68.1%</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
+          <CardHeader className="pb-2 flex flex-row items-center space-y-0">
+            <CardTitle className="text-sm font-medium opacity-90">TV Shows</CardTitle>
+            <Tv className="h-4 w-4 ml-auto opacity-70" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-red-400">4,300</div>
+            <div className="text-sm opacity-70">31.9%</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90">Global Reach</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-red-400">190+</div>
+            <div className="text-sm opacity-70">Countries</div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Charts Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -97,7 +171,7 @@ const NetflixDashboard = () => {
                     dataKey="count"
                   >
                     {genreData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`hsl(${360 - index * 45}, 75%, ${60 - index * 3}%)`} stroke="none" />
+                      <Cell key={`cell-${index}`} fill={`hsl(${0 + index * 10}, 75%, ${60 - index * 5}%)`} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -114,7 +188,7 @@ const NetflixDashboard = () => {
             <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
               {genreData.map((genre, index) => (
                 <div key={genre.genre} className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${360 - index * 45}, 75%, ${60 - index * 3}%)` }}></div>
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${0 + index * 10}, 75%, ${60 - index * 5}%)` }}></div>
                   <span className="text-gray-300">{genre.genre}</span>
                 </div>
               ))}
@@ -200,6 +274,125 @@ const NetflixDashboard = () => {
                   }} 
                 />
                 <Bar dataKey="count" fill="#DC2626" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* New Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Viewing Trends by Genre */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Monthly Viewing Trends by Genre</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setTrendsZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(trendsZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setTrendsZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${trendsZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={viewingTrendsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="month" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Legend />
+                  <Area type="monotone" dataKey="Drama" stackId="1" stroke="#DC2626" fill="#DC2626" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="Comedy" stackId="1" stroke="#EF4444" fill="#EF4444" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="Action" stackId="1" stroke="#F87171" fill="#F87171" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="Documentary" stackId="1" stroke="#FCA5A5" fill="#FCA5A5" fillOpacity={0.8} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Content Performance */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Top Content Performance</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setPerformanceZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <span className="text-gray-300 text-xs">{Math.round(performanceZoom * 100)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setPerformanceZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div style={{ transform: `scale(${performanceZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={contentPerformanceData} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis type="number" stroke="#9CA3AF" />
+                  <YAxis dataKey="title" type="category" stroke="#9CA3AF" width={100} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }} 
+                  />
+                  <Legend />
+                  <Bar dataKey="views" fill="#DC2626" name="Views (M)" />
+                  <Bar dataKey="engagement" fill="#F87171" name="Engagement %" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Budget vs Revenue Analysis */}
+      <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-white">Budget vs Revenue Analysis by Genre</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={() => setBudgetZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
+              <ZoomOut className="h-3 w-3" />
+            </Button>
+            <span className="text-gray-300 text-xs">{Math.round(budgetZoom * 100)}%</span>
+            <Button variant="outline" size="sm" onClick={() => setBudgetZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
+              <ZoomIn className="h-3 w-3" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div style={{ transform: `scale(${budgetZoom})`, transformOrigin: 'center' }}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={budgetVsRevenueData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="genre" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Legend />
+                <Bar dataKey="budget" fill="#DC2626" name="Budget ($M)" />
+                <Bar dataKey="revenue" fill="#EF4444" name="Revenue ($M)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
