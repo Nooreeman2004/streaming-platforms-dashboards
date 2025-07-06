@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,12 +56,6 @@ const AmazonDashboard = () => {
     return acc;
   }, {});
 
-  const genreData = Object.entries(genreStats).map(([genre, count], index) => ({
-    name: genre,
-    value: count,
-    fill: ['#1F77B4', '#0066CC', '#4A90E2', '#6BB6FF', '#87CEEB'][index % 5]
-  }));
-
   // Yearly release data
   const yearlyStats = filteredShows.reduce((acc: Record<number, { year: number; movies: number; series: number }>, show) => {
     const year = show.year;
@@ -79,12 +72,6 @@ const AmazonDashboard = () => {
     acc[show.rating] = (acc[show.rating] || 0) + 1;
     return acc;
   }, {});
-
-  const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
-    name: rating,
-    value: count,
-    fill: ['#1F77B4', '#0066CC', '#4A90E2', '#6BB6FF', '#87CEEB'][index % 5]
-  }));
 
   // Region data
   const regionStats = filteredShows.reduce((acc: Record<string, number>, show) => {
@@ -111,6 +98,27 @@ const AmazonDashboard = () => {
   const genres = ['All', ...Array.from(new Set(amazonShows.map(show => show.genre)))];
   const years = ['All', ...Array.from(new Set(amazonShows.map(show => show.year.toString()))).sort().reverse()];
   const types = ['All', 'Movie', 'TV Show'];
+
+  // Updated pie chart colors with better red variations
+  const getRedVariations = () => [
+    '#DC2626', // red-600
+    '#EF4444', // red-500
+    '#F87171', // red-400
+    '#FCA5A5', // red-300
+    '#FEE2E2'  // red-100
+  ];
+
+  const genreData = Object.entries(genreStats).map(([genre, count], index) => ({
+    name: genre,
+    value: count,
+    fill: getRedVariations()[index % 5]
+  }));
+
+  const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
+    name: rating,
+    value: count,
+    fill: getRedVariations()[index % 5]
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -314,13 +322,12 @@ const AmazonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Legend />
                   <Line 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#1F77B4" 
+                    stroke="#DC2626" 
                     strokeWidth={3}
-                    dot={{ fill: '#1F77B4', strokeWidth: 2, r: 6 }}
+                    dot={{ fill: '#DC2626', strokeWidth: 2, r: 6 }}
                     name="Genre Count"
                   />
                 </LineChart>
@@ -379,7 +386,7 @@ const AmazonDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* View Rating */}
+        {/* View Rating - Updated with red variations */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">View Rating</CardTitle>
@@ -406,7 +413,7 @@ const AmazonDashboard = () => {
                     dataKey="value"
                   >
                     {ratingData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="#1f2937" strokeWidth={2} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -417,13 +424,16 @@ const AmazonDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={36}
-                    wrapperStyle={{ color: '#fff', fontSize: '12px' }}
-                  />
                 </PieChart>
               </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center flex-wrap gap-2 mt-4">
+              {ratingData.map((entry, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.fill }}></div>
+                  <span className="text-gray-300 text-sm">{entry.name}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

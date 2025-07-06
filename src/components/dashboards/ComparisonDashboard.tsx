@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,10 +22,13 @@ const ComparisonDashboard = () => {
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedMetric, setSelectedMetric] = useState('content');
+  const [selectedRegion, setSelectedRegion] = useState('all');
+  const [selectedRating, setSelectedRating] = useState('all');
+  const [selectedContentType, setSelectedContentType] = useState('all');
 
   const platformData = [
     { platform: 'Netflix', totalShows: 13500, movies: 10400, series: 3100, color: '#E50914', subscribers: 230, revenue: 31.6 },
-    { platform: 'Amazon Prime', totalShows: 9684, movies: 7814, series: 1854, color: '#00A8E1', subscribers: 200, revenue: 25.0 },
+    { platform: 'Amazon Prime', totalShows: 9684, movies: 7814, series: 1854, color: '#FF9500', subscribers: 200, revenue: 25.0 },
     { platform: 'Disney+', totalShows: 1450, movies: 1052, series: 398, color: '#8B5CF6', subscribers: 118, revenue: 7.4 }
   ];
 
@@ -108,7 +112,7 @@ const ComparisonDashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+          <div className="w-16 h-16 bg-gradient-to-r from-red-500 via-orange-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
             VS
           </div>
           <div>
@@ -128,16 +132,16 @@ const ComparisonDashboard = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Enhanced Filters */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
             <Filter className="h-5 w-5" />
-            <span>Filters & Analytics Controls</span>
+            <span>Advanced Filters & Analytics Controls</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div>
               <label className="text-gray-400 text-sm mb-2 block">Genre Filter</label>
               <Select value={selectedGenre} onValueChange={setSelectedGenre}>
@@ -189,18 +193,69 @@ const ComparisonDashboard = () => {
               </Select>
             </div>
 
-            <div className="flex items-end">
-              <Button 
-                onClick={() => {
-                  setSelectedGenre('all');
-                  setSelectedYear('all');
-                  setSelectedMetric('content');
-                }}
-                className="w-full bg-gradient-to-r from-red-500 via-blue-500 to-purple-500 text-white"
-              >
-                Reset Filters
-              </Button>
+            <div>
+              <label className="text-gray-400 text-sm mb-2 block">Region</label>
+              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="All Regions" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="all">All Regions</SelectItem>
+                  <SelectItem value="north-america">North America</SelectItem>
+                  <SelectItem value="europe">Europe</SelectItem>
+                  <SelectItem value="asia">Asia</SelectItem>
+                  <SelectItem value="latin-america">Latin America</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            <div>
+              <label className="text-gray-400 text-sm mb-2 block">Content Rating</label>
+              <Select value={selectedRating} onValueChange={setSelectedRating}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="All Ratings" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="all">All Ratings</SelectItem>
+                  <SelectItem value="g">G</SelectItem>
+                  <SelectItem value="pg">PG</SelectItem>
+                  <SelectItem value="pg-13">PG-13</SelectItem>
+                  <SelectItem value="r">R</SelectItem>
+                  <SelectItem value="tv-ma">TV-MA</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-gray-400 text-sm mb-2 block">Content Type</label>
+              <Select value={selectedContentType} onValueChange={setSelectedContentType}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="movies">Movies Only</SelectItem>
+                  <SelectItem value="series">Series Only</SelectItem>
+                  <SelectItem value="originals">Originals Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="flex justify-center mt-4">
+            <Button 
+              onClick={() => {
+                setSelectedGenre('all');
+                setSelectedYear('all');
+                setSelectedMetric('content');
+                setSelectedRegion('all');
+                setSelectedRating('all');
+                setSelectedContentType('all');
+              }}
+              className="bg-gradient-to-r from-red-500 via-orange-500 to-purple-500 text-white"
+            >
+              Reset All Filters
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -244,7 +299,7 @@ const ComparisonDashboard = () => {
 
       {/* Charts Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Market Share - Fixed colors and removed gaps */}
+        {/* Market Share */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Market Share by Content Volume</CardTitle>
@@ -263,14 +318,22 @@ const ComparisonDashboard = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={marketShare}
+                    data={[
+                      { name: 'Netflix', value: 54.8, color: '#E50914' },
+                      { name: 'Amazon Prime', value: 39.3, color: '#FF9500' },
+                      { name: 'Disney+', value: 5.9, color: '#8B5CF6' }
+                    ]}
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
                     paddingAngle={0}
                     dataKey="value"
                   >
-                    {marketShare.map((entry, index) => (
+                    {[
+                      { name: 'Netflix', value: 54.8, color: '#E50914' },
+                      { name: 'Amazon Prime', value: 39.3, color: '#FF9500' },
+                      { name: 'Disney+', value: 5.9, color: '#8B5CF6' }
+                    ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
@@ -287,12 +350,18 @@ const ComparisonDashboard = () => {
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center space-x-4 mt-4">
-              {marketShare.map((entry, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
-                  <span className="text-gray-300 text-sm">{entry.name}</span>
-                </div>
-              ))}
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span className="text-gray-300 text-sm">Netflix</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                <span className="text-gray-300 text-sm">Amazon Prime</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                <span className="text-gray-300 text-sm">Disney+</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -317,7 +386,13 @@ const ComparisonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${growthZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={yearlyGrowth}>
+                <AreaChart data={[
+                  { year: 2019, Netflix: 8500, Amazon: 6500, Disney: 500 },
+                  { year: 2020, Netflix: 11000, Amazon: 8000, Disney: 900 },
+                  { year: 2021, Netflix: 13500, Amazon: 9684, Disney: 1450 },
+                  { year: 2022, Netflix: 15000, Amazon: 11000, Disney: 1800 },
+                  { year: 2023, Netflix: 16500, Amazon: 12500, Disney: 2200 }
+                ]}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="year" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
@@ -330,7 +405,7 @@ const ComparisonDashboard = () => {
                     }} 
                   />
                   <Area type="monotone" dataKey="Netflix" stackId="1" stroke="#E50914" fill="#E50914" fillOpacity={0.6} />
-                  <Area type="monotone" dataKey="Amazon" stackId="1" stroke="#00A8E1" fill="#00A8E1" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="Amazon" stackId="1" stroke="#FF9500" fill="#FF9500" fillOpacity={0.6} />
                   <Area type="monotone" dataKey="Disney" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -339,7 +414,7 @@ const ComparisonDashboard = () => {
         </Card>
       </div>
 
-      {/* Global Platform Ratings Map */}
+      {/* Global Platform Ratings Map - Updated without lines */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white flex items-center space-x-2">
@@ -359,7 +434,7 @@ const ComparisonDashboard = () => {
         <CardContent>
           <div style={{ transform: `scale(${ratingMapZoom})`, transformOrigin: 'center' }}>
             <ResponsiveContainer width="100%" height={400}>
-              <ComposedChart data={platformRatingsByCountry} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={platformRatingsByCountry} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
                   dataKey="country" 
@@ -380,11 +455,8 @@ const ComparisonDashboard = () => {
                 />
                 <Bar dataKey="Netflix" fill="#E50914" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="Amazon" fill="#FF9500" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Disney" fill="#00D4FF" radius={[2, 2, 0, 0]} />
-                <Line type="monotone" dataKey="Netflix" stroke="#E50914" strokeWidth={2} />
-                <Line type="monotone" dataKey="Amazon" stroke="#FF9500" strokeWidth={2} />
-                <Line type="monotone" dataKey="Disney" stroke="#00D4FF" strokeWidth={2} />
-              </ComposedChart>
+                <Bar dataKey="Disney" fill="#8B5CF6" radius={[2, 2, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center space-x-6 mt-4">
@@ -397,7 +469,7 @@ const ComparisonDashboard = () => {
               <span className="text-gray-300 text-sm">Amazon Rating</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
               <span className="text-gray-300 text-sm">Disney+ Rating</span>
             </div>
           </div>
