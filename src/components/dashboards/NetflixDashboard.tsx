@@ -286,7 +286,7 @@ const NetflixDashboard = () => {
 
       {/* Charts Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Genre Distribution - Bar Chart for more than 5 categories */}
+        {/* Content by Genre - Bar Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content by Genre</CardTitle>

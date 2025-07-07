@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ScatterChart, Scatter } from 'recharts';
 import { useState } from 'react';
 import { TrendingUp, Users, Globe, Star, ZoomIn, ZoomOut, Filter } from 'lucide-react';
 
@@ -20,60 +19,72 @@ const ComparisonDashboard = () => {
   const [genreZoom, setGenreZoom] = useState(1);
   const [regionalZoom, setRegionalZoom] = useState(1);
 
-  const platforms = ['All', 'Netflix', 'Amazon Prime', 'Disney+', 'Hulu', 'HBO Max'];
+  const platforms = ['All', 'Netflix', 'Amazon Prime', 'Disney+'];
   const metrics = ['All', 'Subscribers', 'Content', 'Revenue', 'Engagement'];
   const years = ['2021', '2022', '2023', '2024'];
 
-  // Updated data with colors for Content Production Budget
+  // Updated data with only Netflix, Amazon Prime, Disney+
   const contentProductionData = [
     { platform: 'Netflix', budget: 17.0, color: '#DC2626' },
     { platform: 'Amazon Prime', budget: 13.0, color: '#2563EB' },
-    { platform: 'Disney+', budget: 10.0, color: '#7C3AED' },
-    { platform: 'HBO Max', budget: 8.0, color: '#059669' },
-    { platform: 'Apple TV+', budget: 6.0, color: '#D97706' },
-    { platform: 'Hulu', budget: 4.0, color: '#DC2626' }
+    { platform: 'Disney+', budget: 10.0, color: '#7C3AED' }
   ];
 
   const marketShareData = [
-    { platform: 'Netflix', share: 28, subscribers: 247.2, color: '#DC2626' },
-    { platform: 'Amazon Prime', share: 22, subscribers: 200.0, color: '#2563EB' },
-    { platform: 'Disney+', share: 15, subscribers: 164.2, color: '#7C3AED' },
-    { platform: 'HBO Max', share: 12, subscribers: 95.8, color: '#059669' },
-    { platform: 'Hulu', share: 10, subscribers: 48.2, color: '#D97706' },
-    { platform: 'Others', share: 13, subscribers: 120.5, color: '#6B7280' }
+    { platform: 'Netflix', share: 40, subscribers: 247.2, color: '#DC2626' },
+    { platform: 'Amazon Prime', share: 35, subscribers: 200.0, color: '#2563EB' },
+    { platform: 'Disney+', share: 25, subscribers: 164.2, color: '#7C3AED' }
   ];
 
   const contentVolumeData = [
-    { year: '2020', netflix: 3500, amazon: 2800, disney: 1200, hulu: 1800, hbo: 1500 },
-    { year: '2021', netflix: 4200, amazon: 3400, disney: 1600, hulu: 2100, hbo: 1800 },
-    { year: '2022', netflix: 5100, amazon: 4200, disney: 2200, hulu: 2500, hbo: 2200 },
-    { year: '2023', netflix: 6200, amazon: 5200, disney: 2900, hulu: 3100, hbo: 2800 }
+    { year: '2020', netflix: 3500, amazon: 2800, disney: 1200 },
+    { year: '2021', netflix: 4200, amazon: 3400, disney: 1600 },
+    { year: '2022', netflix: 5100, amazon: 4200, disney: 2200 },
+    { year: '2023', netflix: 6200, amazon: 5200, disney: 2900 }
   ];
 
   const performanceMetrics = [
     { platform: 'Netflix', engagement: 85, retention: 78, satisfaction: 82 },
     { platform: 'Amazon Prime', engagement: 79, retention: 74, satisfaction: 79 },
-    { platform: 'Disney+', engagement: 88, retention: 82, satisfaction: 87 },
-    { platform: 'HBO Max', engagement: 82, retention: 76, satisfaction: 84 },
-    { platform: 'Hulu', engagement: 75, retention: 71, satisfaction: 76 }
+    { platform: 'Disney+', engagement: 88, retention: 82, satisfaction: 87 }
   ];
 
   const genrePopularityData = [
-    { genre: 'Drama', netflix: 25, amazon: 22, disney: 15, hbo: 30 },
-    { genre: 'Comedy', netflix: 20, amazon: 18, disney: 25, hbo: 15 },
-    { genre: 'Action', netflix: 18, amazon: 25, disney: 20, hbo: 20 },
-    { genre: 'Documentary', netflix: 15, amazon: 20, disney: 10, hbo: 18 },
-    { genre: 'Animation', netflix: 12, amazon: 8, disney: 40, hbo: 5 },
-    { genre: 'Sci-Fi', netflix: 10, amazon: 15, disney: 8, hbo: 12 }
+    { genre: 'Drama', netflix: 25, amazon: 22, disney: 15 },
+    { genre: 'Comedy', netflix: 20, amazon: 18, disney: 25 },
+    { genre: 'Action', netflix: 18, amazon: 25, disney: 20 },
+    { genre: 'Documentary', netflix: 15, amazon: 20, disney: 10 },
+    { genre: 'Animation', netflix: 12, amazon: 8, disney: 40 },
+    { genre: 'Sci-Fi', netflix: 10, amazon: 15, disney: 8 }
   ];
 
   const regionalReachData = [
-    { region: 'North America', netflix: 95, amazon: 88, disney: 92, hbo: 85 },
-    { region: 'Europe', netflix: 87, amazon: 82, disney: 78, hbo: 75 },
-    { region: 'Asia Pacific', netflix: 78, amazon: 85, disney: 65, hbo: 45 },
-    { region: 'Latin America', netflix: 92, amazon: 70, disney: 68, hbo: 55 },
-    { region: 'Middle East', netflix: 65, amazon: 75, disney: 58, hbo: 40 }
+    { region: 'North America', netflix: 95, amazon: 88, disney: 92 },
+    { region: 'Europe', netflix: 87, amazon: 82, disney: 78 },
+    { region: 'Asia Pacific', netflix: 78, amazon: 85, disney: 65 },
+    { region: 'Latin America', netflix: 92, amazon: 70, disney: 68 },
+    { region: 'Middle East', netflix: 65, amazon: 75, disney: 58 }
   ];
+
+  // Scatter plot data for Subscriber vs Revenue analysis
+  const subscriberRevenueData = [
+    { platform: 'Netflix', subscribers: 247.2, revenue: 31.6, color: '#DC2626' },
+    { platform: 'Amazon Prime', subscribers: 200.0, revenue: 25.2, color: '#2563EB' },
+    { platform: 'Disney+', subscribers: 164.2, revenue: 21.8, color: '#7C3AED' }
+  ];
+
+  // Filter data based on selections
+  const getFilteredData = (data: any[]) => {
+    if (selectedPlatform === 'All') return data;
+    return data.filter(item => 
+      item.platform === selectedPlatform || 
+      item[selectedPlatform.toLowerCase().replace(' ', '')] !== undefined
+    );
+  };
+
+  const filteredMarketShare = getFilteredData(marketShareData);
+  const filteredContentVolume = getFilteredData(contentVolumeData);
+  const filteredPerformance = getFilteredData(performanceMetrics);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -194,7 +205,7 @@ const ComparisonDashboard = () => {
 
       {/* Charts Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Market Share - Pie Chart */}
+        {/* Market Share - Donut Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Market Share Distribution</CardTitle>
@@ -213,14 +224,15 @@ const ComparisonDashboard = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={marketShareData}
+                    data={filteredMarketShare}
                     cx="50%"
                     cy="50%"
+                    innerRadius={60}
                     outerRadius={120}
                     paddingAngle={2}
                     dataKey="share"
                   >
-                    {marketShareData.map((entry, index) => (
+                    {filteredMarketShare.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -239,10 +251,10 @@ const ComparisonDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Content Volume - Area Chart */}
+        {/* Subscriber vs Revenue - Scatter Plot */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Content Volume Growth</CardTitle>
+            <CardTitle className="text-white">Subscriber vs Revenue Analysis</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setContentZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -256,25 +268,26 @@ const ComparisonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${contentZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={contentVolumeData}>
+                <ScatterChart data={subscriberRevenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="year" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
+                  <XAxis dataKey="subscribers" stroke="#9CA3AF" name="Subscribers (M)" />
+                  <YAxis dataKey="revenue" stroke="#9CA3AF" name="Revenue ($B)" />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
                       border: '1px solid #374151',
                       borderRadius: '8px',
                       color: '#fff'
-                    }} 
+                    }}
+                    formatter={(value, name) => [value, name === 'subscribers' ? 'Subscribers (M)' : 'Revenue ($B)']}
+                    labelFormatter={(label, payload) => payload?.[0]?.payload?.platform || ''}
                   />
-                  <Legend />
-                  <Area type="monotone" dataKey="netflix" stackId="1" stroke="#DC2626" fill="#DC2626" fillOpacity={0.8} name="Netflix" />
-                  <Area type="monotone" dataKey="amazon" stackId="1" stroke="#2563EB" fill="#2563EB" fillOpacity={0.8} name="Amazon Prime" />
-                  <Area type="monotone" dataKey="disney" stackId="1" stroke="#7C3AED" fill="#7C3AED" fillOpacity={0.8} name="Disney+" />
-                  <Area type="monotone" dataKey="hulu" stackId="1" stroke="#D97706" fill="#D97706" fillOpacity={0.8} name="Hulu" />
-                  <Area type="monotone" dataKey="hbo" stackId="1" stroke="#059669" fill="#059669" fillOpacity={0.8} name="HBO Max" />
-                </AreaChart>
+                  <Scatter dataKey="revenue" fill="#8884d8">
+                    {subscriberRevenueData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Scatter>
+                </ScatterChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -310,7 +323,7 @@ const ComparisonDashboard = () => {
                     color: '#fff'
                   }} 
                 />
-                <Bar dataKey="budget" fill="#8884d8" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="budget" radius={[4, 4, 0, 0]}>
                   {contentProductionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -340,7 +353,7 @@ const ComparisonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${performanceZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={performanceMetrics}>
+                <RadarChart data={filteredPerformance}>
                   <PolarGrid stroke="#374151" />
                   <PolarAngleAxis dataKey="platform" tick={{ fill: '#9CA3AF', fontSize: 12 }} />
                   <PolarRadiusAxis tick={{ fill: '#9CA3AF', fontSize: 10 }} />
@@ -383,7 +396,7 @@ const ComparisonDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Genre Popularity - Line Chart */}
+        {/* Genre Popularity - Stacked Area Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Genre Popularity by Platform</CardTitle>
@@ -400,7 +413,7 @@ const ComparisonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={genrePopularityData}>
+                <AreaChart data={genrePopularityData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="genre" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
@@ -413,18 +426,17 @@ const ComparisonDashboard = () => {
                     }} 
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="netflix" stroke="#DC2626" strokeWidth={2} name="Netflix" />
-                  <Line type="monotone" dataKey="amazon" stroke="#2563EB" strokeWidth={2} name="Amazon Prime" />
-                  <Line type="monotone" dataKey="disney" stroke="#7C3AED" strokeWidth={2} name="Disney+" />
-                  <Line type="monotone" dataKey="hbo" stroke="#059669" strokeWidth={2} name="HBO Max" />
-                </LineChart>
+                  <Area type="monotone" dataKey="netflix" stackId="1" stroke="#DC2626" fill="#DC2626" fillOpacity={0.8} name="Netflix" />
+                  <Area type="monotone" dataKey="amazon" stackId="1" stroke="#2563EB" fill="#2563EB" fillOpacity={0.8} name="Amazon Prime" />
+                  <Area type="monotone" dataKey="disney" stackId="1" stroke="#7C3AED" fill="#7C3AED" fillOpacity={0.8} name="Disney+" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Regional Reach Analysis */}
+      {/* Regional Reach Analysis - Custom Visualization */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white">Regional Market Penetration (%)</CardTitle>
@@ -440,26 +452,49 @@ const ComparisonDashboard = () => {
         </CardHeader>
         <CardContent>
           <div style={{ transform: `scale(${regionalZoom})`, transformOrigin: 'center' }}>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={regionalReachData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis type="number" stroke="#9CA3AF" />
-                <YAxis dataKey="region" type="category" stroke="#9CA3AF" width={100} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-                <Legend />
-                <Bar dataKey="netflix" fill="#DC2626" name="Netflix" />
-                <Bar dataKey="amazon" fill="#2563EB" name="Amazon Prime" />
-                <Bar dataKey="disney" fill="#7C3AED" name="Disney+" />
-                <Bar dataKey="hbo" fill="#059669" name="HBO Max" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-6">
+              {regionalReachData.map((region, index) => (
+                <div key={index} className="space-y-2">
+                  <h4 className="text-white font-medium">{region.region}</h4>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-red-400 text-sm">Netflix</span>
+                      <span className="text-white text-sm">{region.netflix}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${region.netflix}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-blue-400 text-sm">Amazon Prime</span>
+                      <span className="text-white text-sm">{region.amazon}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${region.amazon}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-purple-400 text-sm">Disney+</span>
+                      <span className="text-white text-sm">{region.disney}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${region.disney}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
