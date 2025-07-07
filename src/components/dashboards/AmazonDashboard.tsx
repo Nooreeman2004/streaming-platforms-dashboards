@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -403,103 +402,57 @@ const AmazonDashboard = () => {
         </Card>
       </div>
 
-      {/* Area Chart and Custom Region Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Content Growth Area Chart */}
-        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-white">Content Growth Over Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={areaData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="year" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-                <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="total" 
-                  stackId="1" 
-                  stroke="#2563EB" 
-                  fill="#2563EB" 
-                  fillOpacity={0.6}
-                  name="Total Content"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="series" 
-                  stackId="2" 
-                  stroke="#3B82F6" 
-                  fill="#3B82F6" 
-                  fillOpacity={0.6}
-                  name="TV Shows"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="movies" 
-                  stackId="3" 
-                  stroke="#60A5FA" 
-                  fill="#60A5FA" 
-                  fillOpacity={0.6}
-                  name="Movies"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Content by Region - Custom Progress Bar Visualization */}
-        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Content by Region</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => setRegionZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
-                <ZoomOut className="h-3 w-3" />
-              </Button>
-              <span className="text-gray-300 text-xs">{Math.round(regionZoom * 100)}%</span>
-              <Button variant="outline" size="sm" onClick={() => setRegionZoom(prev => Math.min(prev + 0.2, 2))} className="text-gray-300 border-gray-600">
-                <ZoomIn className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
-              <div className="space-y-6">
-                {regionData.map((region, index) => {
-                  const percentage = (region.value / filteredShows.length) * 100;
-                  return (
-                    <div key={region.name} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">{region.name}</span>
-                        <span className="text-blue-400 font-semibold">{region.value} shows</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-3">
-                        <div 
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-1000 flex items-center justify-end pr-2"
-                          style={{ width: `${Math.max(percentage, 5)}%` }}
-                        >
-                          <span className="text-white text-xs font-semibold">
-                            {percentage.toFixed(0)}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Area Chart Only - Content by Region Removed */}
+      <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white">Content Growth Over Time</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={areaData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="year" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1f2937', 
+                  border: '1px solid #374151',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }} 
+              />
+              <Legend />
+              <Area 
+                type="monotone" 
+                dataKey="total" 
+                stackId="1" 
+                stroke="#2563EB" 
+                fill="#2563EB" 
+                fillOpacity={0.6}
+                name="Total Content"
+              />
+              <Area 
+                type="monotone" 
+                dataKey="series" 
+                stackId="2" 
+                stroke="#3B82F6" 
+                fill="#3B82F6" 
+                fillOpacity={0.6}
+                name="TV Shows"
+              />
+              <Area 
+                type="monotone" 
+                dataKey="movies" 
+                stackId="3" 
+                stroke="#60A5FA" 
+                fill="#60A5FA" 
+                fillOpacity={0.6}
+                name="Movies"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* New Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
