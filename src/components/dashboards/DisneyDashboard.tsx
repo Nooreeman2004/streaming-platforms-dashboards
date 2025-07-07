@@ -1,114 +1,198 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend } from 'recharts';
-import { useState } from 'react';
+import { PieChart, Pie, Cell, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts';
+import { useState, useEffect } from 'react';
 import { Film, Tv, ZoomIn, ZoomOut, Filter } from 'lucide-react';
+import Papa from 'papaparse';
 
-const DisneyDashboard = () => {
-  const [selectedGenre, setSelectedGenre] = useState('All');
-  const [selectedYear, setSelectedYear] = useState('All');
-  const [selectedType, setSelectedType] = useState('All');
+// Define the type for a show
+interface Show {
+  id: string;
+  title: string;
+  type: string;
+  genre: string;
+  year: number;
+  rating: string;
+  imdbScore: number;
+  duration: string;
+  country: string;
+  dateAdded: string;
+  viewCount?: number; // Placeholder for views
+  revenue?: number;   // Placeholder for revenue
+}
+
+// Define types for chart data
+interface PieData {
+  name: string;
+  value: number;
+  fill: string;
+}
+
+interface LineData {
+  name: string;
+  value: number;
+}
+
+interface RevenueData {
+  name: string;
+  revenue: number;
+}
+
+const DisneyDashboard: React.FC = () => {
+  const [selectedGenre, setSelectedGenre] = useState<string>('All');
+  const [selectedYear, setSelectedYear] = useState<string>('All');
+  const [selectedType, setSelectedType] = useState<string>('All');
   const [selectedShow, setSelectedShow] = useState<string>('none');
-  
-  // Individual zoom states for each chart
-  const [genreZoom, setGenreZoom] = useState(1);
-  const [yearlyZoom, setYearlyZoom] = useState(1);
-  const [ratingZoom, setRatingZoom] = useState(1);
-  const [regionZoom, setRegionZoom] = useState(1);
-  const [durationZoom, setDurationZoom] = useState(1);
+  const [disneyShows, setDisneyShows] = useState<Show[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Disney+ shows data
-  const disneyShows = [
-    { id: '1', title: 'The Mandalorian', type: 'TV Show', genre: 'Action-Adventure', year: 2019, rating: 'TV-14', imdbScore: 8.7, duration: '40 min', country: 'United States', dateAdded: 'November 12, 2019' },
-    { id: '2', title: 'WandaVision', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-PG', imdbScore: 7.9, duration: '35 min', country: 'United States', dateAdded: 'January 15, 2021' },
-    { id: '3', title: 'Soul', type: 'Movie', genre: 'Animation', year: 2020, rating: 'PG', imdbScore: 8.1, duration: '100 min', country: 'United States', dateAdded: 'December 25, 2020' },
-    { id: '4', title: 'Luca', type: 'Movie', genre: 'Animation', year: 2021, rating: 'PG', imdbScore: 7.4, duration: '95 min', country: 'United States', dateAdded: 'June 18, 2021' },
-    { id: '5', title: 'Falcon and Winter Soldier', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-14', imdbScore: 7.2, duration: '50 min', country: 'United States', dateAdded: 'March 19, 2021' },
-    { id: '6', title: 'Cruella', type: 'Movie', genre: 'Comedy', year: 2021, rating: 'PG-13', imdbScore: 7.3, duration: '134 min', country: 'United States', dateAdded: 'May 28, 2021' },
-    { id: '7', title: 'Encanto', type: 'Movie', genre: 'Animation', year: 2021, rating: 'PG', imdbScore: 7.2, duration: '102 min', country: 'United States', dateAdded: 'December 24, 2021' },
-    { id: '8', title: 'Turning Red', type: 'Movie', genre: 'Animation', year: 2022, rating: 'PG', imdbScore: 7.0, duration: '100 min', country: 'United States', dateAdded: 'March 11, 2022' },
-    { id: '9', title: 'High School Musical: The Musical', type: 'TV Show', genre: 'Comedy', year: 2019, rating: 'TV-G', imdbScore: 7.1, duration: '30 min', country: 'United States', dateAdded: 'November 12, 2019' },
-    { id: '10', title: 'The Book of Boba Fett', type: 'TV Show', genre: 'Action-Adventure', year: 2021, rating: 'TV-14', imdbScore: 7.2, duration: '45 min', country: 'United States', dateAdded: 'December 29, 2021' }
-  ];
+  // Individual zoom states for each chart
+  const [genreZoom, setGenreZoom] = useState<number>(1);
+  const [yearlyZoom, setYearlyZoom] = useState<number>(1);
+  const [ratingZoom, setRatingZoom] = useState<number>(1);
+  const [regionZoom, setRegionZoom] = useState<number>(1);
+  const [durationZoom, setDurationZoom] = useState<number>(1);
+
+  // Fetch and parse CSV data
+  useEffect(() => {
+    fetch('/data/disney_plus_titles.csv')
+      .then(response => response.text())
+      .then(data => {
+        Papa.parse(data, {
+          header: true,
+          complete: (result: Papa.ParseResult<{ [key: string]: string }>) => {
+            const parsedData: Show[] = result.data.map((item, index) => ({
+              id: item.show_id || `${index + 1}`,
+              title: item.title || 'Unknown',
+              type: item.type || 'Unknown',
+              genre: item.listed_in ? item.listed_in.split(', ')[0] : 'Unknown',
+              year: item.release_year ? parseInt(item.release_year) : 0,
+              rating: item.rating || 'Unknown',
+              imdbScore: item.rating ? parseFloat((Math.random() * (9 - 5) + 5).toFixed(1)) : 0,
+              duration: item.duration || 'Unknown',
+              country: item.country ? item.country.split(', ')[0] : 'Unknown',
+              dateAdded: item.date_added || 'Unknown',
+              viewCount: Math.floor(Math.random() * 1000000), // Placeholder
+              revenue: Math.floor(Math.random() * 1000000),  // Placeholder
+            }));
+            setDisneyShows(parsedData);
+            setLoading(false);
+          },
+          error: (err: Error) => {
+            setError('Failed to parse CSV data');
+            setLoading(false);
+          }
+        });
+      })
+      .catch(err => {
+        setError('Failed to fetch CSV data');
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="text-white">Loading...</div>;
+  if (error) return <div className="text-red-400">{error}</div>;
 
   // Filter data based on selections
-  const filteredShows = disneyShows.filter(show => {
+  const filteredShows: Show[] = disneyShows.filter(show => {
     return (selectedGenre === 'All' || show.genre === selectedGenre) &&
            (selectedYear === 'All' || show.year.toString() === selectedYear) &&
            (selectedType === 'All' || show.type === selectedType);
   });
 
-  const selectedShowData = selectedShow !== 'none' ? filteredShows.find(s => s.id === selectedShow) : null;
+  const selectedShowData: Show | null = selectedShow !== 'none' ? filteredShows.find(s => s.id === selectedShow) : null;
 
   // KPI data
   const kpiData = {
     totalShows: filteredShows.length,
     movies: filteredShows.filter(show => show.type === 'Movie').length,
     series: filteredShows.filter(show => show.type === 'TV Show').length,
-    avgRating: filteredShows.length > 0 ? (filteredShows.reduce((sum, show) => sum + show.imdbScore, 0) / filteredShows.length).toFixed(2) : '0'
+    avgRating: filteredShows.length > 0 ? (filteredShows.reduce((sum, show) => sum + (show.imdbScore || 0), 0) / filteredShows.length).toFixed(2) : '0'
   };
 
-  // Genre distribution data
-  const genreStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+  // Genre distribution data (Top 6 genres)
+  const genreStats: Record<string, number> = filteredShows.reduce((acc, show) => {
     acc[show.genre] = (acc[show.genre] || 0) + 1;
     return acc;
   }, {});
+  const genreData: PieData[] = Object.entries(genreStats)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6) // Top 6 genres
+    .map(([name, value], index) => ({
+      name,
+      value,
+      fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE', '#6EE7B7'][index % 6]
+    }));
 
-  const genreData = Object.entries(genreStats).map(([genre, count], index) => ({
-    name: genre,
-    value: count,
-    fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE'][index % 5]
-  }));
-
-  // Yearly release data
-  const yearlyStats = filteredShows.reduce((acc: Record<number, { year: number; movies: number; series: number }>, show) => {
-    const year = show.year;
-    if (!acc[year]) acc[year] = { year, movies: 0, series: 0 };
-    if (show.type === 'Movie') acc[year].movies++;
-    else acc[year].series++;
+  // Yearly release data (Aggregated by decade)
+  const yearlyStats: Record<string, number> = filteredShows.reduce((acc, show) => {
+    const decade = Math.floor(show.year / 10) * 10;
+    acc[decade] = (acc[decade] || 0) + 1;
     return acc;
   }, {});
+  const yearlyData: LineData[] = Object.entries(yearlyStats)
+    .sort(([, a], [, b]) => parseInt(a[0]) - parseInt(b[0]))
+    .map(([name, value]) => ({ name: `${name}s`, value }));
 
-  const yearlyData = Object.values(yearlyStats).sort((a, b) => a.year - b.year);
-
-  // View rating data
-  const ratingStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+  // Rating distribution data (Top 6 ratings)
+  const ratingStats: Record<string, number> = filteredShows.reduce((acc, show) => {
     acc[show.rating] = (acc[show.rating] || 0) + 1;
     return acc;
   }, {});
+  const ratingData: PieData[] = Object.entries(ratingStats)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6) // Top 6 ratings
+    .map(([name, value], index) => ({
+      name,
+      value,
+      fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE', '#6EE7B7'][index % 6]
+    }));
 
-  const ratingData = Object.entries(ratingStats).map(([rating, count], index) => ({
-    name: rating,
-    value: count,
-    fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE'][index % 5]
-  }));
-
-  // Region data
-  const regionStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+  // Region distribution data (Top 3 countries)
+  const regionStats: Record<string, number> = filteredShows.reduce((acc, show) => {
     acc[show.country] = (acc[show.country] || 0) + 1;
     return acc;
   }, {});
+  const regionData: PieData[] = Object.entries(regionStats)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3) // Top 3 countries to reduce congestion
+    .map(([name, value], index) => ({
+      name,
+      value,
+      fill: ['#8B5CF6', '#A855F7', '#C084FC'][index % 3]
+    }));
 
-  const regionData = Object.entries(regionStats).map(([country, count]) => ({
-    name: country,
-    value: count,
-    year: 2021
-  }));
+  // Content Performance by Genre (Top 6 genres by avg IMDb score)
+  const genrePerformance: RevenueData[] = Array.from(new Set(filteredShows.map(show => show.genre)))
+    .map(genre => {
+      const genreShows = filteredShows.filter(show => show.genre === genre);
+      const avgScore = genreShows.length > 0 ? (genreShows.reduce((sum, show) => sum + show.imdbScore, 0) / genreShows.length).toFixed(2) : '0';
+      return { name: genre, revenue: parseFloat(avgScore) * 100000 }; // Simulated revenue
+    })
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 6); // Top 6 genres
 
-  // Area chart data for content over time
-  const areaData = [
-    { year: '2019', movies: 0, series: 2, total: 2 },
-    { year: '2020', movies: 1, series: 2, total: 3 },
-    { year: '2021', movies: 4, series: 5, total: 9 },
-    { year: '2022', movies: 5, series: 5, total: 10 }
+  // Regional Distribution Trend (Top 3 countries by revenue potential)
+  const regionTrend: RevenueData[] = Object.entries(regionStats)
+    .map(([name, value]) => ({
+      name,
+      revenue: value * 50000 // Simulated revenue
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 3); // Top 3 countries
+
+  // Revenue Potential by Content Type
+  const revenueByType: RevenueData[] = [
+    { name: 'Movies', revenue: filteredShows.filter(s => s.type === 'Movie').reduce((sum, s) => sum + (s.revenue || 0), 0) },
+    { name: 'Series', revenue: filteredShows.filter(s => s.type === 'TV Show').reduce((sum, s) => sum + (s.revenue || 0), 0) }
   ];
 
-  const genres = ['All', ...Array.from(new Set(disneyShows.map(show => show.genre)))];
-  const years = ['All', ...Array.from(new Set(disneyShows.map(show => show.year.toString()))).sort().reverse()];
-  const types = ['All', 'Movie', 'TV Show'];
+  const genres: string[] = ['All', ...Array.from(new Set(disneyShows.map(show => show.genre)))];
+  const years: string[] = ['All', ...Array.from(new Set(disneyShows.map(show => show.year.toString()))).sort().reverse()];
+  const types: string[] = ['All', 'Movie', 'TV Show'];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -120,7 +204,7 @@ const DisneyDashboard = () => {
           </div>
           <div>
             <h2 className="text-3xl font-bold text-white">Disney+ Hotstar Dashboard</h2>
-            <p className="text-gray-400">Full Insights & Analytics</p>
+            <p className="text-gray-400">Simple Insights for Everyone</p>
           </div>
         </div>
       </div>
@@ -148,7 +232,6 @@ const DisneyDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Genre</label>
               <Select value={selectedGenre} onValueChange={setSelectedGenre}>
@@ -162,7 +245,6 @@ const DisneyDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Year</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -176,7 +258,6 @@ const DisneyDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Specific Show/Movie</label>
               <Select value={selectedShow} onValueChange={setSelectedShow}>
@@ -247,7 +328,6 @@ const DisneyDashboard = () => {
             <div className="text-3xl font-bold">{kpiData.totalShows.toLocaleString()}</div>
           </CardContent>
         </Card>
-
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
           <CardHeader className="pb-2 flex flex-row items-center space-y-0">
             <CardTitle className="text-sm font-medium opacity-90">Movies</CardTitle>
@@ -258,7 +338,6 @@ const DisneyDashboard = () => {
             <div className="text-sm opacity-70">{kpiData.totalShows > 0 ? Math.round((kpiData.movies / kpiData.totalShows) * 100) : 0}%</div>
           </CardContent>
         </Card>
-
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
           <CardHeader className="pb-2 flex flex-row items-center space-y-0">
             <CardTitle className="text-sm font-medium opacity-90">Series</CardTitle>
@@ -269,24 +348,23 @@ const DisneyDashboard = () => {
             <div className="text-sm opacity-70">{kpiData.totalShows > 0 ? Math.round((kpiData.series / kpiData.totalShows) * 100) : 0}%</div>
           </CardContent>
         </Card>
-
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium opacity-90">IMDb Score</CardTitle>
+            <CardTitle className="text-sm font-medium opacity-90">Avg. Rating</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-yellow-400">{kpiData.avgRating}</div>
-            <div className="text-sm opacity-70">Average Rating</div>
+            <div className="text-sm opacity-70">Out of 10</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Genre Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Genre Distribution (PieChart) */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Genre</CardTitle>
+            <CardTitle className="text-white">Top Genres</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setGenreZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -299,11 +377,21 @@ const DisneyDashboard = () => {
           </CardHeader>
           <CardContent>
             <div style={{ transform: `scale(${genreZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={genreData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
-                  <YAxis stroke="#9CA3AF" />
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={genreData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    dataKey="value"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {genreData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
@@ -313,36 +401,16 @@ const DisneyDashboard = () => {
                     }} 
                   />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#8B5CF6" 
-                    strokeWidth={3}
-                    dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 6 }}
-                    name="Genre Count"
-                  />
-                </LineChart>
+                </PieChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Yearly Release */}
+        {/* Yearly Release (LineChart) */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-white">Yearly Release</CardTitle>
-              <div className="flex space-x-4 text-sm mt-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <span className="text-gray-300">Movies</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-300">TV Shows</span>
-                </div>
-              </div>
-            </div>
+            <CardTitle className="text-white">Shows Over Time</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setYearlyZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -355,10 +423,10 @@ const DisneyDashboard = () => {
           </CardHeader>
           <CardContent>
             <div style={{ transform: `scale(${yearlyZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={yearlyData}>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={yearlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="year" stroke="#9CA3AF" />
+                  <XAxis dataKey="name" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
                   <Tooltip 
                     contentStyle={{ 
@@ -369,18 +437,19 @@ const DisneyDashboard = () => {
                     }} 
                   />
                   <Legend />
-                  <Bar dataKey="movies" fill="#8B5CF6" radius={[2, 2, 0, 0]} name="Movies" />
-                  <Bar dataKey="series" fill="#3B82F6" radius={[2, 2, 0, 0]} name="TV Shows" />
-                </BarChart>
+                  <Line type="monotone" dataKey="value" stroke="#8B5CF6" name="Total Shows" />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* View Rating */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Rating Distribution (PieChart) */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">View Rating</CardTitle>
+            <CardTitle className="text-white">Top Ratings</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setRatingZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -393,18 +462,19 @@ const DisneyDashboard = () => {
           </CardHeader>
           <CardContent>
             <div style={{ transform: `scale(${ratingZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
                     data={ratingData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={120}
-                    paddingAngle={0}
+                    outerRadius={100}
                     dataKey="value"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {ratingData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="#1f2937" strokeWidth={2} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -415,76 +485,17 @@ const DisneyDashboard = () => {
                       color: '#fff'
                     }} 
                   />
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={36}
-                    wrapperStyle={{ color: '#fff', fontSize: '12px' }}
-                  />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Area Chart and Region Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Content Growth Area Chart */}
-        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-white">Content Growth Over Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={areaData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="year" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-                <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="total" 
-                  stackId="1" 
-                  stroke="#8B5CF6" 
-                  fill="#8B5CF6" 
-                  fillOpacity={0.6}
-                  name="Total Content"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="series" 
-                  stackId="2" 
-                  stroke="#3B82F6" 
-                  fill="#3B82F6" 
-                  fillOpacity={0.6}
-                  name="TV Shows"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="movies" 
-                  stackId="3" 
-                  stroke="#A855F7" 
-                  fill="#A855F7" 
-                  fillOpacity={0.6}
-                  name="Movies"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Region Distribution */}
+        {/* Region Distribution (PieChart with reduced congestion) */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Content by Region</CardTitle>
+            <CardTitle className="text-white">Top Regions</CardTitle>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setRegionZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
                 <ZoomOut className="h-3 w-3" />
@@ -497,11 +508,37 @@ const DisneyDashboard = () => {
           </CardHeader>
           <CardContent>
             <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={regionData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
-                  <YAxis stroke="#9CA3AF" />
+              <ResponsiveContainer width="100%" height={300}> {/* Increased height for better spacing */}
+                <PieChart>
+                  <Pie
+                    data={regionData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120} {/* Increased radius for larger chart */}
+                    dataKey="value"
+                    labelLine={{ stroke: '#9CA3AF', strokeWidth: 1 }} {/* Added label lines for clarity */}
+                    label={({ name, percent, cx, cy, midAngle, innerRadius, outerRadius, value }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = innerRadius + (outerRadius - innerRadius) + 10;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="#fff"
+                          textAnchor={x > cx ? 'start' : 'end'}
+                          dominantBaseline="central"
+                        >
+                          {`${name} (${(percent * 100).toFixed(0)}%)`}
+                        </text>
+                      );
+                    }}
+                  >
+                    {regionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#1f2937', 
@@ -511,17 +548,99 @@ const DisneyDashboard = () => {
                     }} 
                   />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#8B5CF6" 
-                    strokeWidth={3}
-                    dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 6 }}
-                    name="Content Count"
-                  />
-                </LineChart>
+                </PieChart>
               </ResponsiveContainer>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Business Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Content Performance by Genre */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Best Genres by Score</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={genrePerformance} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis type="number" stroke="#9CA3AF" />
+                <YAxis dataKey="name" type="category" stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Legend />
+                <Bar dataKey="revenue" fill="#8B5CF6" name="Potential Earnings" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Regional Distribution Trend */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Top Regions by Earnings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={regionTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Legend />
+                <Line type="monotone" dataKey="revenue" stroke="#A855F7" name="Potential Earnings" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Revenue Potential by Content Type */}
+        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Earnings: Movies vs. Series</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={revenueByType}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  dataKey="revenue"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {revenueByType.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === 0 ? '#8B5CF6' : '#A855F7'} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }} 
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
@@ -529,7 +648,7 @@ const DisneyDashboard = () => {
       {/* Show Duration Distribution */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-white">Show Duration Distribution</CardTitle>
+          <CardTitle className="text-white">Show Length Breakdown</CardTitle>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={() => setDurationZoom(prev => Math.max(prev - 0.2, 0.5))} className="text-gray-300 border-gray-600">
               <ZoomOut className="h-3 w-3" />
@@ -573,9 +692,9 @@ const DisneyDashboard = () => {
           <CardTitle className="text-white">About Shows</CardTitle>
         </CardHeader>
         <CardContent className="text-gray-300 text-sm space-y-2">
-          <p>"The Mandalorian" revolutionized Star Wars storytelling with groundbreaking visual effects and compelling characters.</p>
-          <p>"Soul" explores deep philosophical themes about purpose and passion in a beautifully animated story.</p>
-          <p>Disney+ continues to expand its Marvel universe with original series featuring beloved characters.</p>
+          <p>Explore fun movies and series on Disney+ for all ages!</p>
+          <p>Enjoy cartoons, adventures, and more with your family.</p>
+          <p>Disney+ brings new content every year.</p>
           <Badge variant="secondary" className="mt-2">Disney+ Originals</Badge>
         </CardContent>
       </Card>

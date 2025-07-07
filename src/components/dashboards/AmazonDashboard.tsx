@@ -1,18 +1,33 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { useState } from 'react';
-import { Film, Tv, ZoomIn, ZoomOut, Filter, Play } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Film, Tv, ZoomIn, ZoomOut, Filter } from 'lucide-react';
+import * as d3 from 'd3';
 
-const AmazonDashboard = () => {
+interface AmazonShow {
+  id: string;
+  type: 'Movie' | 'TV Show' | 'Unknown';
+  title: string;
+  genre: string;
+  year: number;
+  rating: string;
+  duration: string;
+  country: string;
+  dateAdded: string;
+}
+
+const AmazonDashboard: React.FC = () => {
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedShow, setSelectedShow] = useState<string>('none');
-  
+  const [amazonShows, setAmazonShows] = useState<AmazonShow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Individual zoom states for each chart
   const [genreZoom, setGenreZoom] = useState(1);
   const [yearlyZoom, setYearlyZoom] = useState(1);
@@ -22,113 +37,175 @@ const AmazonDashboard = () => {
   const [qualityZoom, setQualityZoom] = useState(1);
   const [seasonalZoom, setSeasonalZoom] = useState(1);
 
-  // Amazon Prime shows data
-  const amazonShows = [
-    { id: '1', title: 'The Boys', type: 'TV Show', genre: 'Action', year: 2019, rating: 'TV-MA', imdbScore: 8.7, duration: '60 min', country: 'United States', dateAdded: 'July 26, 2019' },
-    { id: '2', title: 'The Marvelous Mrs. Maisel', type: 'TV Show', genre: 'Comedy', year: 2017, rating: 'TV-14', imdbScore: 8.7, duration: '47 min', country: 'United States', dateAdded: 'March 17, 2017' },
-    { id: '3', title: 'Jack Ryan', type: 'TV Show', genre: 'Action', year: 2018, rating: 'TV-14', imdbScore: 8.0, duration: '51 min', country: 'United States', dateAdded: 'August 31, 2018' },
-    { id: '4', title: 'The Expanse', type: 'TV Show', genre: 'Sci-Fi', year: 2015, rating: 'TV-14', imdbScore: 8.5, duration: '43 min', country: 'United States', dateAdded: 'December 14, 2015' },
-    { id: '5', title: 'Borat Subsequent Moviefilm', type: 'Movie', genre: 'Comedy', year: 2020, rating: 'R', imdbScore: 6.6, duration: '95 min', country: 'United States', dateAdded: 'October 23, 2020' },
-    { id: '6', title: 'Sound of Metal', type: 'Movie', genre: 'Drama', year: 2019, rating: 'R', imdbScore: 7.7, duration: '120 min', country: 'United States', dateAdded: 'December 4, 2020' },
-    { id: '7', title: 'The Tomorrow War', type: 'Movie', genre: 'Action', year: 2021, rating: 'PG-13', imdbScore: 6.5, duration: '138 min', country: 'United States', dateAdded: 'July 2, 2021' },
-    { id: '8', title: 'Invincible', type: 'TV Show', genre: 'Animation', year: 2021, rating: 'TV-MA', imdbScore: 8.7, duration: '47 min', country: 'United States', dateAdded: 'March 25, 2021' },
-    { id: '9', title: 'Upload', type: 'TV Show', genre: 'Comedy', year: 2020, rating: 'TV-14', imdbScore: 7.9, duration: '30 min', country: 'United States', dateAdded: 'May 1, 2020' },
-    { id: '10', title: 'The Wheel of Time', type: 'TV Show', genre: 'Fantasy', year: 2021, rating: 'TV-14', imdbScore: 7.1, duration: '60 min', country: 'United States', dateAdded: 'November 19, 2021' }
-  ];
+  // Fetch CSV data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('Fetching CSV from /data/amazon_prime_titles.csv...');
+        const response = await fetch('/data/amazon_prime_titles.csv');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status} - Check if the file exists at /data/amazon_titles.csv`);
+        }
+        const csvText = await response.text();
+        console.log('Raw CSV text:', csvText.substring(0, 200) + '...'); // Log first 200 chars
+        const parsedData = d3.csvParse(csvText, (d: any): AmazonShow => {
+          const parsedShow = {
+            id: d.show_id || `s${Math.random().toString(36).slice(2)}`,
+            type: (d.type || 'Unknown') as 'Movie' | 'TV Show' | 'Unknown',
+            title: d.title || 'Untitled',
+            genre: d.listed_in ? d.listed_in.split(', ')[0] || 'Unknown' : 'Unknown',
+            year: parseInt(d.release_year) || 0,
+            rating: d.rating || 'Not Rated',
+            duration: d.duration || 'Unknown',
+            country: d.country || 'Unknown',
+            dateAdded: d.date_added || 'Unknown',
+          };
+          console.log('Parsed row:', parsedShow); // Log each parsed row
+          return parsedShow;
+        });
+        console.log('Parsed data length:', parsedData.length);
+        if (parsedData.length === 0) {
+          throw new Error('No data parsed from CSV. Check column names and data format.');
+        }
+        setAmazonShows(parsedData);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching or parsing CSV:', err);
+        setError(`Failed to load data: ${err.message}. Ensure the CSV is in /data/amazon_prime_titles.csv and has the correct format.`);
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  // Filter data based on selections
-  const filteredShows = amazonShows.filter(show => {
-    return (selectedGenre === 'All' || show.genre === selectedGenre) &&
-           (selectedYear === 'All' || show.year.toString() === selectedYear) &&
-           (selectedType === 'All' || show.type === selectedType);
-  });
+  // Memoized filter data
+  const filteredShows = useMemo(() => {
+    const filtered = amazonShows.filter(show =>
+      (selectedGenre === 'All' || show.genre === selectedGenre) &&
+      (selectedYear === 'All' || show.year.toString() === selectedYear) &&
+      (selectedType === 'All' || show.type === selectedType)
+    );
+    console.log('Filtered shows length:', filtered.length);
+    return filtered;
+  }, [amazonShows, selectedGenre, selectedYear, selectedType]);
 
   const selectedShowData = selectedShow !== 'none' ? filteredShows.find(s => s.id === selectedShow) : null;
 
+  // Memoized filter options
+  const genres = useMemo(() => ['All', ...Array.from(new Set(amazonShows.map(show => show.genre))).sort()], [amazonShows]);
+  const years = useMemo(() => ['All', ...Array.from(new Set(amazonShows.map(show => show.year.toString()))).sort().reverse()], [amazonShows]);
+  const types = ['All', 'Movie', 'TV Show'];
+
   // KPI data
-  const kpiData = {
+  const kpiData = useMemo(() => ({
     totalShows: filteredShows.length,
     movies: filteredShows.filter(show => show.type === 'Movie').length,
     series: filteredShows.filter(show => show.type === 'TV Show').length,
-    avgRating: filteredShows.length > 0 ? (filteredShows.reduce((sum, show) => sum + show.imdbScore, 0) / filteredShows.length).toFixed(2) : '0'
-  };
+    avgRating: 'N/A', // Removed imdbScore, so no average rating
+  }), [filteredShows]);
 
-  // Genre distribution data
-  const genreStats = filteredShows.reduce((acc: Record<string, number>, show) => {
-    acc[show.genre] = (acc[show.genre] || 0) + 1;
-    return acc;
-  }, {});
+  // Genre distribution data (dynamic)
+  const genreData = useMemo(() => {
+    const genreStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+      acc[show.genre] = (acc[show.genre] || 0) + 1;
+      return acc;
+    }, {});
+    const colors = ['#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#DBEAFE', '#EFF6FF'];
+    const data = Object.entries(genreStats)
+      .map(([genre, count], index) => ({
+        genre,
+        count,
+        percentage: filteredShows.length ? ((count / filteredShows.length) * 100).toFixed(1) : 0,
+        color: colors[index % colors.length],
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 7);
+    console.log('Genre data:', data);
+    return data;
+  }, [filteredShows]);
 
-  // Yearly release data
-  const yearlyStats = filteredShows.reduce((acc: Record<number, { year: number; movies: number; series: number }>, show) => {
-    const year = show.year;
-    if (!acc[year]) acc[year] = { year, movies: 0, series: 0 };
-    if (show.type === 'Movie') acc[year].movies++;
-    else acc[year].series++;
-    return acc;
-  }, {});
+  // Rating distribution data (dynamic)
+  const ratingDistribution = useMemo(() => {
+    const ratingStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+      acc[show.rating] = (acc[show.rating] || 0) + 1;
+      return acc;
+    }, {});
+    const colors = ['#1E40AF', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE'];
+    const data = Object.entries(ratingStats)
+      .map(([rating, count], index) => ({
+        rating,
+        count,
+        color: colors[index % colors.length],
+      }))
+      .sort((a, b) => b.count - a.count);
+    console.log('Rating distribution:', data);
+    return data;
+  }, [filteredShows]);
 
-  const yearlyData = Object.values(yearlyStats).sort((a, b) => a.year - b.year);
+  // Content growth over time (dynamic)
+  const areaData = useMemo(() => {
+    const yearlyStats = filteredShows.reduce((acc: Record<number, { year: number; movies: number; series: number; total: number }>, show) => {
+      const year = show.year;
+      if (!acc[year]) acc[year] = { year, movies: 0, series: 0, total: 0 };
+      if (show.type === 'Movie') acc[year].movies++;
+      else if (show.type === 'TV Show') acc[year].series++;
+      acc[year].total++;
+      return acc;
+    }, {});
+    const data = Object.values(yearlyStats).sort((a, b) => a.year - b.year);
+    console.log('Area data:', data);
+    return data;
+  }, [filteredShows]);
 
-  // View rating data
-  const ratingStats = filteredShows.reduce((acc: Record<string, number>, show) => {
-    acc[show.rating] = (acc[show.rating] || 0) + 1;
-    return acc;
-  }, {});
+  // Region distribution data for Pie Chart (dynamic)
+  const regionData = useMemo(() => {
+    const regionStats = filteredShows.reduce((acc: Record<string, number>, show) => {
+      acc[show.country] = (acc[show.country] || 0) + 1;
+      return acc;
+    }, {});
+    const colors = ['#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#DBEAFE', '#EFF6FF'];
+    const data = Object.entries(regionStats)
+      .map(([country, count], index) => ({
+        name: country,
+        value: count,
+        percentage: filteredShows.length ? ((count / filteredShows.length) * 100).toFixed(1) : 0,
+        color: colors[index % colors.length],
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 7);
+    console.log('Region data:', data);
+    return data;
+  }, [filteredShows]);
 
-  // Region data - Custom visualization
-  const regionStats = filteredShows.reduce((acc: Record<string, number>, show) => {
-    acc[show.country] = (acc[show.country] || 0) + 1;
-    return acc;
-  }, {});
+  // Show Duration Distribution (dynamic)
+  const durationData = useMemo(() => {
+    const durationCounts = filteredShows.reduce(
+      (acc: Record<string, number>, show) => {
+        const durationNum = parseInt(show.duration.replace(' min', '').replace(' Season', '').replace(' Seasons', '')) || 0;
+        if (durationNum < 30) acc['< 30 min']++;
+        else if (durationNum <= 60) acc['30-60 min']++;
+        else if (durationNum <= 90) acc['60-90 min']++;
+        else acc['> 90 min']++;
+        return acc;
+      },
+      { '< 30 min': 0, '30-60 min': 0, '60-90 min': 0, '> 90 min': 0 }
+    );
+    const data = Object.entries(durationCounts).map(([duration, count]) => ({
+      duration,
+      count,
+      percentage: filteredShows.length ? ((count / filteredShows.length) * 100).toFixed(1) : 0,
+    }));
+    console.log('Duration data:', data);
+    return data;
+  }, [filteredShows]);
 
-  const regionData = Object.entries(regionStats).map(([country, count]) => ({
-    name: country,
-    value: count,
-    year: 2021
-  }));
-
-  // Area chart data for content over time
-  const areaData = [
-    { year: '2015', movies: 0, series: 1, total: 1 },
-    { year: '2017', movies: 0, series: 2, total: 2 },
-    { year: '2018', movies: 0, series: 3, total: 3 },
-    { year: '2019', movies: 1, series: 4, total: 5 },
-    { year: '2020', movies: 2, series: 6, total: 8 },
-    { year: '2021', movies: 3, series: 7, total: 10 }
-  ];
-
-  const genres = ['All', ...Array.from(new Set(amazonShows.map(show => show.genre)))];
-  const years = ['All', ...Array.from(new Set(amazonShows.map(show => show.year.toString()))).sort().reverse()];
-  const types = ['All', 'Movie', 'TV Show'];
-
-  // Updated chart data with blue colors
-  const genreData = [
-    { genre: 'Action', count: 1654, percentage: 22, color: '#2563EB' },
-    { genre: 'Drama', count: 1434, percentage: 19, color: '#3B82F6' },
-    { genre: 'Comedy', count: 1256, percentage: 17, color: '#60A5FA' },
-    { genre: 'Documentary', count: 1287, percentage: 17, color: '#93C5FD' },
-    { genre: 'Thriller', count: 876, percentage: 12, color: '#BFDBFE' },
-    { genre: 'Horror', count: 567, percentage: 8, color: '#DBEAFE' },
-    { genre: 'Romance', count: 454, percentage: 6, color: '#EFF6FF' }
-  ];
-
-  const ratingDistribution = [
-    { rating: 'G', count: 380, color: '#1E40AF' },
-    { rating: 'PG', count: 620, color: '#2563EB' },
-    { rating: 'PG-13', count: 1890, color: '#3B82F6' },
-    { rating: 'R', count: 1654, color: '#60A5FA' },
-    { rating: 'TV-MA', count: 2800, color: '#93C5FD' },
-    { rating: 'TV-14', count: 2340, color: '#BFDBFE' }
-  ];
-
-  // New charts data
+  // Static data for Content Quality and Seasonal Trends
   const contentQualityData = [
     { genre: 'Drama', avgRating: 8.2, criticScore: 85, audienceScore: 78, viewerHours: 45000 },
     { genre: 'Action', avgRating: 7.8, criticScore: 76, audienceScore: 84, viewerHours: 52000 },
     { genre: 'Comedy', avgRating: 7.5, criticScore: 72, audienceScore: 81, viewerHours: 38000 },
     { genre: 'Sci-Fi', avgRating: 8.1, criticScore: 82, audienceScore: 86, viewerHours: 41000 },
-    { genre: 'Fantasy', avgRating: 7.9, criticScore: 79, audienceScore: 82, viewerHours: 39000 }
+    { genre: 'Fantasy', avgRating: 7.9, criticScore: 79, audienceScore: 82, viewerHours: 39000 },
   ];
 
   const seasonalTrendsData = [
@@ -137,11 +214,14 @@ const AmazonDashboard = () => {
     { month: 'Mar', drama: 13000, action: 16500, comedy: 10200, scifi: 9100 },
     { month: 'Apr', drama: 14500, action: 17800, comedy: 11000, scifi: 9800 },
     { month: 'May', drama: 15200, action: 18500, comedy: 11800, scifi: 10200 },
-    { month: 'Jun', drama: 16000, action: 19200, comedy: 12500, scifi: 10800 }
+    { month: 'Jun', drama: 16000, action: 19200, comedy: 12500, scifi: 10800 },
   ];
 
+  if (loading) return <div className="text-white">Loading data...</div>;
+  if (error) return <div className="text-red-400">{error}</div>;
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in p-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -150,10 +230,22 @@ const AmazonDashboard = () => {
           </div>
           <div>
             <h2 className="text-3xl font-bold text-white">Amazon Prime Video Analytics</h2>
-            <p className="text-gray-400">9,684+ titles across 240+ countries</p>
+            <p className="text-gray-400">{amazonShows.length.toLocaleString()}+ titles across {Array.from(new Set(amazonShows.map(show => show.country))).length}+ countries</p>
           </div>
         </div>
       </div>
+
+      {/* Debug Data Display */}
+      <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white">Debug Data</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-gray-300 text-sm overflow-x-auto max-h-40">
+            {JSON.stringify(amazonShows.slice(0, 5), null, 2)}...
+          </pre>
+        </CardContent>
+      </Card>
 
       {/* Advanced Filters */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -178,7 +270,6 @@ const AmazonDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Genre</label>
               <Select value={selectedGenre} onValueChange={setSelectedGenre}>
@@ -192,7 +283,6 @@ const AmazonDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Year</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -206,7 +296,6 @@ const AmazonDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            
             <div>
               <label className="text-gray-300 text-sm mb-2 block">Specific Show/Movie</label>
               <Select value={selectedShow} onValueChange={setSelectedShow}>
@@ -260,7 +349,7 @@ const AmazonDashboard = () => {
               </div>
               <div>
                 <span className="text-blue-400 text-sm font-medium">IMDb Score</span>
-                <p className="text-yellow-400 font-bold">{selectedShowData.imdbScore}</p>
+                <p className="text-yellow-400 font-bold">N/A</p> {/* Removed imdbScore */}
               </div>
             </div>
           </CardContent>
@@ -277,7 +366,6 @@ const AmazonDashboard = () => {
             <div className="text-3xl font-bold">{kpiData.totalShows.toLocaleString()}</div>
           </CardContent>
         </Card>
-
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
           <CardHeader className="pb-2 flex flex-row items-center space-y-0">
             <CardTitle className="text-sm font-medium opacity-90">Movies</CardTitle>
@@ -288,7 +376,6 @@ const AmazonDashboard = () => {
             <div className="text-sm opacity-70">{kpiData.totalShows > 0 ? Math.round((kpiData.movies / kpiData.totalShows) * 100) : 0}%</div>
           </CardContent>
         </Card>
-
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
           <CardHeader className="pb-2 flex flex-row items-center space-y-0">
             <CardTitle className="text-sm font-medium opacity-90">Series</CardTitle>
@@ -299,13 +386,12 @@ const AmazonDashboard = () => {
             <div className="text-sm opacity-70">{kpiData.totalShows > 0 ? Math.round((kpiData.series / kpiData.totalShows) * 100) : 0}%</div>
           </CardContent>
         </Card>
-
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90">IMDb Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-400">{kpiData.avgRating}</div>
+            <div className="text-3xl font-bold text-yellow-400">N/A</div>
             <div className="text-sm opacity-70">Average Rating</div>
           </CardContent>
         </Card>
@@ -344,13 +430,14 @@ const AmazonDashboard = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
                       border: '1px solid #374151',
                       borderRadius: '8px',
-                      color: '#fff'
-                    }} 
+                      color: '#fff',
+                    }}
+                    formatter={(value, name, props) => [`${value} (${props.payload.percentage}%)`, props.payload.genre]}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -387,15 +474,19 @@ const AmazonDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="rating" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
                       border: '1px solid #374151',
                       borderRadius: '8px',
-                      color: '#fff'
-                    }} 
+                      color: '#fff',
+                    }}
                   />
-                  <Bar dataKey="count" fill="#2563EB" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {ratingDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -403,7 +494,7 @@ const AmazonDashboard = () => {
         </Card>
       </div>
 
-      {/* Area Chart and Custom Region Chart */}
+      {/* Area Chart and Region Pie Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Growth Area Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -411,53 +502,55 @@ const AmazonDashboard = () => {
             <CardTitle className="text-white">Content Growth Over Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={areaData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="year" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }} 
-                />
-                <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="total" 
-                  stackId="1" 
-                  stroke="#2563EB" 
-                  fill="#2563EB" 
-                  fillOpacity={0.6}
-                  name="Total Content"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="series" 
-                  stackId="2" 
-                  stroke="#3B82F6" 
-                  fill="#3B82F6" 
-                  fillOpacity={0.6}
-                  name="TV Shows"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="movies" 
-                  stackId="3" 
-                  stroke="#60A5FA" 
-                  fill="#60A5FA" 
-                  fillOpacity={0.6}
-                  name="Movies"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div style={{ transform: `scale(${yearlyZoom})`, transformOrigin: 'center' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={areaData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="year" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff',
+                    }}
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="total"
+                    stackId="1"
+                    stroke="#2563EB"
+                    fill="#2563EB"
+                    fillOpacity={0.6}
+                    name="Total Content"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="series"
+                    stackId="2"
+                    stroke="#3B82F6"
+                    fill="#3B82F6"
+                    fillOpacity={0.6}
+                    name="TV Shows"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="movies"
+                    stackId="3"
+                    stroke="#60A5FA"
+                    fill="#60A5FA"
+                    fillOpacity={0.6}
+                    name="Movies"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Content by Region - Custom Progress Bar Visualization */}
+        {/* Content by Region - Pie Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Content by Region</CardTitle>
@@ -473,35 +566,46 @@ const AmazonDashboard = () => {
           </CardHeader>
           <CardContent>
             <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
-              <div className="space-y-6">
-                {regionData.map((region, index) => {
-                  const percentage = (region.value / filteredShows.length) * 100;
-                  return (
-                    <div key={region.name} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">{region.name}</span>
-                        <span className="text-blue-400 font-semibold">{region.value} shows</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-3">
-                        <div 
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-1000 flex items-center justify-end pr-2"
-                          style={{ width: `${Math.max(percentage, 5)}%` }}
-                        >
-                          <span className="text-white text-xs font-semibold">
-                            {percentage.toFixed(0)}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={regionData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={0}
+                    dataKey="value"
+                  >
+                    {regionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff',
+                    }}
+                    formatter={(value, name, props) => [`${value} (${props.payload.percentage}%)`, props.payload.name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
+              {regionData.map((region, index) => (
+                <div key={region.name} className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: region.color }}></div>
+                  <span className="text-gray-300">{region.name}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* New Charts Row */}
+      {/* Content Quality and Seasonal Trends */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Quality Analysis - Radar Chart */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -540,13 +644,13 @@ const AmazonDashboard = () => {
                     fillOpacity={0.3}
                     strokeWidth={2}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
                       border: '1px solid #374151',
                       borderRadius: '8px',
-                      color: '#fff'
-                    }} 
+                      color: '#fff',
+                    }}
                   />
                   <Legend />
                 </RadarChart>
@@ -555,7 +659,7 @@ const AmazonDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Seasonal Trends */}
+        {/* Seasonal Viewing Trends */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Seasonal Viewing Trends</CardTitle>
@@ -576,13 +680,13 @@ const AmazonDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="month" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
                       border: '1px solid #374151',
                       borderRadius: '8px',
-                      color: '#fff'
-                    }} 
+                      color: '#fff',
+                    }}
                   />
                   <Legend />
                   <Line type="monotone" dataKey="drama" stroke="#2563EB" strokeWidth={2} name="Drama" />
@@ -613,22 +717,18 @@ const AmazonDashboard = () => {
         <CardContent>
           <div style={{ transform: `scale(${durationZoom})`, transformOrigin: 'center' }}>
             <div className="space-y-4">
-              {[
-                { duration: '< 30 min', percentage: 10, count: Math.floor(kpiData.totalShows * 0.1) },
-                { duration: '30-60 min', percentage: 70, count: Math.floor(kpiData.totalShows * 0.7) },
-                { duration: '60-90 min', percentage: 15, count: Math.floor(kpiData.totalShows * 0.15) },
-                { duration: '> 90 min', percentage: 5, count: Math.floor(kpiData.totalShows * 0.05) }
-              ].map((item, index) => (
+              {durationData.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <span className="text-gray-300">{item.duration}</span>
                   <div className="flex items-center space-x-3">
                     <div className="w-32 bg-gray-700 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-blue-500 h-2 rounded-full transition-all duration-500"
                         style={{ width: `${item.percentage}%` }}
                       ></div>
                     </div>
                     <span className="text-white text-sm w-12">{item.percentage}%</span>
+                    <span className="text-gray-400 text-sm w-16">({item.count})</span>
                   </div>
                 </div>
               ))}
