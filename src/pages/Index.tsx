@@ -6,17 +6,19 @@ import NetflixDashboard from '@/components/dashboards/NetflixDashboard';
 import AmazonDashboard from '@/components/dashboards/AmazonDashboard';
 import DisneyDashboard from '@/components/dashboards/DisneyDashboard';
 import ComparisonDashboard from '@/components/dashboards/ComparisonDashboard';
+import InteractiveDashboard from '@/components/dashboards/InteractiveDashboard';
 
-type Platform = 'netflix' | 'amazon' | 'disney' | 'comparison';
+type Platform = 'netflix' | 'amazon' | 'disney' | 'comparison' | 'interactive';
 
 const Index = () => {
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform>('netflix');
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>('interactive');
 
   const platforms = [
     { id: 'netflix', name: 'Netflix', color: 'bg-red-500', textColor: 'text-red-500' },
     { id: 'amazon', name: 'Amazon Prime', color: 'bg-blue-500', textColor: 'text-blue-500' },
     { id: 'disney', name: 'Disney+', color: 'bg-purple-500', textColor: 'text-purple-500' },
-    { id: 'comparison', name: 'Compare All', color: 'bg-gradient-to-r from-red-500 via-blue-500 to-purple-500', textColor: 'text-gray-700' }
+    { id: 'comparison', name: 'Compare All', color: 'bg-gradient-to-r from-red-500 via-blue-500 to-purple-500', textColor: 'text-gray-700' },
+    { id: 'interactive', name: 'Interactive D3', color: 'bg-gradient-to-r from-green-500 to-teal-500', textColor: 'text-gray-700' }
   ];
 
   const renderDashboard = () => {
@@ -30,8 +32,10 @@ const Index = () => {
           return <DisneyDashboard />;
         case 'comparison':
           return <ComparisonDashboard />;
+        case 'interactive':
+          return <InteractiveDashboard />;
         default:
-          return <NetflixDashboard />;
+          return <InteractiveDashboard />;
       }
     } catch (error) {
       console.error('Error rendering dashboard:', error);
