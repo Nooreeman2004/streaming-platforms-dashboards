@@ -35,13 +35,16 @@ const Chart: React.FC<ChartProps> = ({ data, title, width = 600, height = 400, m
   useEffect(() => {
     if (!data.length || !ref.current) return;
 
-    d3.select(ref.current).selectAll('svg').remove();
     const svg = d3.select(ref.current)
-      .append('svg')
+      .selectAll('svg')
+      .data([null])
+      .join('svg')
       .attr('width', width)
       .attr('height', height);
 
-    const g = svg.append('g')
+    const g = svg.select('g')
+      .data([null])
+      .join('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
     drawFn(svg, data, width - margin.left - margin.right, height - margin.top - margin.bottom, margin);
@@ -52,11 +55,14 @@ const Chart: React.FC<ChartProps> = ({ data, title, width = 600, height = 400, m
         g.attr('transform', `translate(${event.transform.x + margin.left},${event.transform.y + margin.top}) scale(${event.transform.k})`);
       });
 
+    svg.call(zoomHandler.transform, d3.zoomIdentity.scale(zoom));
     svg.call(zoomHandler);
 
-    svg.append('g')
+    // Screenshot functionality
+    svg.select('.screenshot')
+      .data([null])
+      .join('text')
       .attr('transform', `translate(${width - margin.right - 40},10)`)
-      .append('text')
       .attr('class', 'screenshot')
       .text('📷')
       .attr('fill', 'white')
@@ -73,14 +79,21 @@ const Chart: React.FC<ChartProps> = ({ data, title, width = 600, height = 400, m
         URL.revokeObjectURL(url);
       });
 
-    svg.append('g')
+    // Reset zoom
+    svg.select('.reset-zoom')
+      .data([null])
+      .join('text')
       .attr('transform', `translate(${width - margin.right - 20},10)`)
-      .append('text')
+      .attr('class', 'reset-zoom')
       .text('↻')
       .attr('fill', 'white')
       .attr('cursor', 'pointer')
-      .on('click', () => svg.call(zoomHandler.transform, d3.zoomIdentity));
-  }, [data, title, width, height, margin, drawFn]);
+      .on('click', () => svg.call(zoomHandler.transform, d3.zoomIdentity.scale(zoom)));
+
+    return () => {
+      d3.select(ref.current).selectAll('svg').remove();
+    };
+  }, [data, title, width, height, margin, drawFn, zoom]);
 
   return (
     <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -103,33 +116,46 @@ const NetflixDashboard: React.FC = () => {
   const [netflixShows, setNetflixShows] = useState<NetflixShow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/data/netflix_titles.csv');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const csvText = await response.text();
-        const parsedData = d3.csvParse(csvText, (d: any): NetflixShow => ({
-          id: d.show_id || `s${Math.random().toString(36).slice(2)}`,
-          type: (d.type || 'Unknown') as 'Movie' | 'TV Show' | 'Unknown',
-          title: d.title || 'Untitled',
-          genre: d.listed_in?.split(', ')[0] || 'Unknown',
-          year: parseInt(d.release_year) || 0,
-          rating: d.rating || 'Not Rated',
-          duration: d.duration ? parseInt(d.duration.replace(' min', '').replace(' Season', '').replace(' Seasons', '')) || 0 : 0,
-          country: d.country || 'Unknown',
-          dateAdded: d.date_added || 'Unknown',
-          description: d.description || '',
-        }));
-        setNetflixShows(parsedData);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching or parsing CSV:', err);
-        setError('Failed to load data. Please try again later.');
+  const fetchData = async (attempt = 0) => {
+    const maxRetries = 3;
+    try {
+      const response = await fetch('/data/netflix_titles.csv');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const csvText = await response.text();
+      const parsedData = d3.csvParse(csvText, (d: any): NetflixShow => ({
+        id: d.show_id || `s${Math.random().toString(36).slice(2)}`,
+        type: (d.type || 'Unknown') as 'Movie' | 'TV Show' | 'Unknown',
+        title: d.title || 'Untitled',
+        genre: d.listed_in?.split(', ')[0] || 'Unknown',
+        year: parseInt(d.release_year) || 0,
+        rating: d.rating || 'Not Rated',
+        duration: (() => {
+          const durationStr = d.duration || '';
+          if (durationStr.includes('min')) return parseInt(durationStr.replace(' min', '')) || 0;
+          if (durationStr.includes('Season') || durationStr.includes('Seasons')) return parseInt(durationStr.replace(' Season', '').replace(' Seasons', '')) || 0;
+          return 0;
+        })(),
+        country: d.country || 'Unknown',
+        dateAdded: d.date_added || 'Unknown',
+        description: d.description || '',
+      }));
+      setNetflixShows(parsedData);
+      setLoading(false);
+      setError(null);
+    } catch (err) {
+      if (attempt < maxRetries) {
+        setTimeout(() => fetchData(attempt + 1), 2000 * (attempt + 1));
+        setRetryCount(attempt + 1);
+      } else {
+        setError(`Failed to load data after ${maxRetries} attempts. Please check your network or CSV file.`);
         setLoading(false);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -159,8 +185,7 @@ const NetflixDashboard: React.FC = () => {
 
     g.selectAll('rect')
       .data(genreData)
-      .enter()
-      .append('rect')
+      .join('rect')
       .attr('x', 0)
       .attr('y', d => y(d.genre)!)
       .attr('width', d => x(d.count))
@@ -180,15 +205,11 @@ const NetflixDashboard: React.FC = () => {
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY - 20) + 'px');
       })
-      .on('mouseout', function () {
-        d3.select(this).attr('fill', '#DC2626');
-        d3.select('.tooltip').remove();
-      });
+      .on('mouseout', () => d3.select('.tooltip').remove());
 
     g.selectAll('text')
       .data(genreData)
-      .enter()
-      .append('text')
+      .join('text')
       .attr('x', d => x(d.count) + 5)
       .attr('y', d => y(d.genre)! + y.bandwidth() / 2)
       .attr('dy', '0.35em')
@@ -231,8 +252,7 @@ const NetflixDashboard: React.FC = () => {
 
     g.selectAll('path')
       .data(series)
-      .enter()
-      .append('path')
+      .join('path')
       .attr('fill', (d, i) => i === 0 ? '#DC2626' : '#F472B6')
       .attr('d', d3.area().x(d => x(d.data.year)).y0(d => y(d[0])).y1(d => y(d[1])))
       .on('mouseover', function (event, d) {
@@ -249,10 +269,7 @@ const NetflixDashboard: React.FC = () => {
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY - 20) + 'px');
       })
-      .on('mouseout', function () {
-        d3.select(this).attr('opacity', 1);
-        d3.select('.tooltip').remove();
-      });
+      .on('mouseout', () => d3.select('.tooltip').remove());
 
     svg.append('g').attr('transform', `translate(${margin.left},${height + margin.top})`)
       .call(d3.axisBottom(x).tickFormat(d3.format('d')))
@@ -292,12 +309,8 @@ const NetflixDashboard: React.FC = () => {
       .attr('stroke', '#DC2626')
       .attr('stroke-width', 2)
       .attr('d', line)
-      .on('mouseover', function () {
-        d3.select(this).attr('stroke', '#F472B6');
-      })
-      .on('mouseout', function () {
-        d3.select(this).attr('stroke', '#DC2626');
-      });
+      .on('mouseover', () => d3.select(this).attr('stroke', '#F472B6'))
+      .on('mouseout', () => d3.select(this).attr('stroke', '#DC2626'));
 
     svg.append('g').attr('transform', `translate(${margin.left},${height + margin.top})`)
       .call(d3.axisBottom(x).tickFormat(d3.format('d')))
@@ -337,8 +350,7 @@ const NetflixDashboard: React.FC = () => {
 
     g.selectAll('path')
       .data(pie(typeData))
-      .enter()
-      .append('path')
+      .join('path')
       .attr('d', arc as any)
       .attr('fill', d => color(d.data.type))
       .on('mouseover', function (event, d) {
@@ -355,15 +367,11 @@ const NetflixDashboard: React.FC = () => {
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY - 20) + 'px');
       })
-      .on('mouseout', function () {
-        d3.select(this).attr('opacity', 1);
-        d3.select('.tooltip').remove();
-      });
+      .on('mouseout', () => d3.select('.tooltip').remove());
 
     g.selectAll('text')
       .data(pie(typeData))
-      .enter()
-      .append('text')
+      .join('text')
       .attr('transform', d => `translate(${arc.centroid(d)})`)
       .attr('dy', '0.35em')
       .attr('text-anchor', 'middle')
@@ -392,8 +400,7 @@ const NetflixDashboard: React.FC = () => {
 
     g.selectAll('rect')
       .data(countryData)
-      .enter()
-      .append('rect')
+      .join('rect')
       .attr('x', 0)
       .attr('y', d => y(d.country)!)
       .attr('width', d => x(d.count))
@@ -413,15 +420,11 @@ const NetflixDashboard: React.FC = () => {
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY - 20) + 'px');
       })
-      .on('mouseout', function () {
-        d3.select(this).attr('fill', '#DC2626');
-        d3.select('.tooltip').remove();
-      });
+      .on('mouseout', () => d3.select('.tooltip').remove());
 
     g.selectAll('text')
       .data(countryData)
-      .enter()
-      .append('text')
+      .join('text')
       .attr('x', d => x(d.count) + 5)
       .attr('y', d => y(d.country)! + y.bandwidth() / 2)
       .attr('dy', '0.35em')
@@ -460,8 +463,7 @@ const NetflixDashboard: React.FC = () => {
 
     const gBars = g.selectAll('g')
       .data(ratingTypeData)
-      .enter()
-      .append('g')
+      .join('g')
       .attr('transform', d => `translate(${x0(d.rating)},0)`);
 
     gBars.selectAll('rect')
@@ -469,8 +471,7 @@ const NetflixDashboard: React.FC = () => {
         { type: 'Movie', value: d.Movie },
         { type: 'TV Show', value: d['TV Show'] }
       ])
-      .enter()
-      .append('rect')
+      .join('rect')
       .attr('x', d => x1(d.type)!)
       .attr('y', d => y(d.value))
       .attr('width', x1.bandwidth())
@@ -490,10 +491,7 @@ const NetflixDashboard: React.FC = () => {
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY - 20) + 'px');
       })
-      .on('mouseout', function () {
-        d3.select(this).attr('opacity', 1);
-        d3.select('.tooltip').remove();
-      });
+      .on('mouseout', () => d3.select('.tooltip').remove());
 
     svg.append('g').attr('transform', `translate(${margin.left},${height + margin.top})`)
       .call(d3.axisBottom(x0))
@@ -530,12 +528,8 @@ const NetflixDashboard: React.FC = () => {
       .attr('stroke', '#DC2626')
       .attr('stroke-width', 2)
       .attr('d', line)
-      .on('mouseover', function () {
-        d3.select(this).attr('stroke', '#F472B6');
-      })
-      .on('mouseout', function () {
-        d3.select(this).attr('stroke', '#DC2626');
-      });
+      .on('mouseover', () => d3.select(this).attr('stroke', '#F472B6'))
+      .on('mouseout', () => d3.select(this).attr('stroke', '#DC2626'));
 
     svg.append('g').attr('transform', `translate(${margin.left},${height + margin.top})`)
       .call(d3.axisBottom(x).tickFormat(d3.format('d')))
@@ -560,7 +554,7 @@ const NetflixDashboard: React.FC = () => {
       .attr('font-size', '12px');
   };
 
-  if (loading) return <div className="text-white">Loading data...</div>;
+  if (loading) return <div className="text-white">Loading data... {retryCount > 0 && `(Retry ${retryCount}/3)`}</div>;
   if (error) return <div className="text-red-400">{error}</div>;
 
   return (
@@ -740,13 +734,13 @@ const NetflixDashboard: React.FC = () => {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Chart data={filteredShows} title="Genre Distribution" zoom={zoom} drawFn={drawGenreDistribution} />
-        <Chart data={filteredShows} title="Yearly Content Types" zoom={zoom} drawFn={drawYearlyContentTypes} />
-        <Chart data={filteredShows} title="Average Duration Trend" zoom={zoom} drawFn={drawAverageDurationTrend} />
-        <Chart data={filteredShows} title="Content Type Proportion" zoom={zoom} drawFn={drawContentTypeProportion} />
-        <Chart data={filteredShows} title="Country Distribution" zoom={zoom} drawFn={drawCountryDistribution} />
-        <Chart data={filteredShows} title="Rating by Content Type" zoom={zoom} drawFn={drawRatingByContentType} />
-        <Chart data={filteredShows} title="Content Addition Trend" zoom={zoom} drawFn={drawContentAdditionTrend} />
+        <Chart key="genre-distribution" data={filteredShows} title="Genre Distribution" zoom={zoom} drawFn={drawGenreDistribution} />
+        <Chart key="yearly-content-types" data={filteredShows} title="Yearly Content Types" zoom={zoom} drawFn={drawYearlyContentTypes} />
+        <Chart key="average-duration-trend" data={filteredShows} title="Average Duration Trend" zoom={zoom} drawFn={drawAverageDurationTrend} />
+        <Chart key="content-type-proportion" data={filteredShows} title="Content Type Proportion" zoom={zoom} drawFn={drawContentTypeProportion} />
+        <Chart key="country-distribution" data={filteredShows} title="Country Distribution" zoom={zoom} drawFn={drawCountryDistribution} />
+        <Chart key="rating-by-content-type" data={filteredShows} title="Rating by Content Type" zoom={zoom} drawFn={drawRatingByContentType} />
+        <Chart key="content-addition-trend" data={filteredShows} title="Content Addition Trend" zoom={zoom} drawFn={drawContentAdditionTrend} />
       </div>
 
       {/* Show Duration Distribution */}
