@@ -151,18 +151,18 @@ const DisneyDashboard: React.FC = () => {
       fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE', '#6EE7B7'][index % 6]
     }));
 
-  // Region distribution data (Top 3 countries)
+  // Region distribution data (Top 6 countries)
   const regionStats: Record<string, number> = filteredShows.reduce((acc, show) => {
     acc[show.country] = (acc[show.country] || 0) + 1;
     return acc;
   }, {});
   const regionData: PieData[] = Object.entries(regionStats)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 3) // Top 3 countries to reduce congestion
+    .slice(0, 6) // Top 6 countries
     .map(([name, value], index) => ({
       name,
       value,
-      fill: ['#8B5CF6', '#A855F7', '#C084FC'][index % 3]
+      fill: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE', '#EDE9FE', '#6EE7B7'][index % 6]
     }));
 
   // Content Performance by Genre (Top 6 genres by avg IMDb score)
@@ -175,14 +175,14 @@ const DisneyDashboard: React.FC = () => {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 6); // Top 6 genres
 
-  // Regional Distribution Trend (Top 3 countries by revenue potential)
+  // Regional Distribution Trend (Top 6 countries by revenue potential)
   const regionTrend: RevenueData[] = Object.entries(regionStats)
     .map(([name, value]) => ({
       name,
       revenue: value * 50000 // Simulated revenue
     }))
     .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 3); // Top 3 countries
+    .slice(0, 6); // Top 6 countries
 
   // Revenue Potential by Content Type
   const revenueByType: RevenueData[] = [
@@ -492,7 +492,7 @@ const DisneyDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Region Distribution (PieChart with reduced congestion) */}
+        {/* Region Distribution (PieChart) */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Top Regions</CardTitle>
@@ -508,32 +508,16 @@ const DisneyDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div style={{ transform: `scale(${regionZoom})`, transformOrigin: 'center' }}>
-              <ResponsiveContainer width="100%" height={300}> {/* Increased height for better spacing */}
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
                     data={regionData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={120} {/* Increased radius for larger chart */}
+                    outerRadius={100}
                     dataKey="value"
-                    labelLine={{ stroke: '#9CA3AF', strokeWidth: 1 }} {/* Added label lines for clarity */}
-                    label={({ name, percent, cx, cy, midAngle, innerRadius, outerRadius, value }) => {
-                      const RADIAN = Math.PI / 180;
-                      const radius = innerRadius + (outerRadius - innerRadius) + 10;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                      return (
-                        <text
-                          x={x}
-                          y={y}
-                          fill="#fff"
-                          textAnchor={x > cx ? 'start' : 'end'}
-                          dominantBaseline="central"
-                        >
-                          {`${name} (${(percent * 100).toFixed(0)}%)`}
-                        </text>
-                      );
-                    }}
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {regionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
