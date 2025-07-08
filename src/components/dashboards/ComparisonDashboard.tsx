@@ -3,8 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, AreaChart, Area, ComposedChart } from 'recharts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ZoomIn, ZoomOut, TrendingUp, Target, Users, Award, Filter, Globe, DollarSign, Clock, Star } from 'lucide-react';
+import Papa from 'papaparse';
 
 const ComparisonDashboard = () => {
   const [zoom, setZoom] = useState(1);
@@ -25,108 +26,205 @@ const ComparisonDashboard = () => {
   const [selectedRating, setSelectedRating] = useState('all');
   const [selectedContentType, setSelectedContentType] = useState('all');
 
-  const platformData = [
-    { platform: 'Netflix', totalShows: 13500, movies: 10400, series: 3100, color: '#DC2626', subscribers: 230, revenue: 31.6 },
-    { platform: 'Amazon Prime', totalShows: 9684, movies: 7814, series: 1854, color: '#2563EB', subscribers: 200, revenue: 25.0 },
-    { platform: 'Disney+', totalShows: 1450, movies: 1052, series: 398, color: '#8B5CF6', subscribers: 118, revenue: 7.4 }
-  ];
+  // Dynamic data states
+  const [platformData, setPlatformData] = useState([]);
+  const [genreComparison, setGenreComparison] = useState([]);
+  const [marketShare, setMarketShare] = useState([]);
+  const [yearlyGrowth, setYearlyGrowth] = useState([]);
+  const [contentQuality, setContentQuality] = useState([]);
+  const [userEngagement, setUserEngagement] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [demographicsData, setDemographicsData] = useState([]);
+  const [platformRatingsByCountry, setPlatformRatingsByCountry] = useState([]);
+  const [contentProductionCost, setContentProductionCost] = useState([]);
+  const [contentReleaseSchedule, setContentReleaseSchedule] = useState([]);
+  const [avgWatchTimeByGenre, setAvgWatchTimeByGenre] = useState([]);
 
-  const genreComparison = [
-    { genre: 'Action', Netflix: 1854, Amazon: 1654, Disney: 298 },
-    { genre: 'Comedy', Netflix: 1456, Amazon: 1256, Disney: 145 },
-    { genre: 'Drama', Netflix: 1234, Amazon: 1134, Disney: 167 },
-    { genre: 'Animation', Netflix: 765, Amazon: 565, Disney: 434 },
-    { genre: 'Documentary', Netflix: 987, Amazon: 1287, Disney: 123 },
-    { genre: 'Horror', Netflix: 456, Amazon: 356, Disney: 23 },
-    { genre: 'Romance', Netflix: 654, Amazon: 454, Disney: 87 }
-  ];
+  // Fetch and process CSV data
+  useEffect(() => {
+    fetch('/data/streamingdata.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          complete: ({ data }) => {
+            // Process data
+            const platforms = ['Netflix', 'Amazon Prime', 'Disney+'];
+            const colors = { Netflix: '#DC2626', 'Amazon Prime': '#2563EB', 'Disney+': '#8B5CF6' };
 
-  const marketShare = [
-    { name: 'Netflix', value: 54.8, color: '#DC2626' },
-    { name: 'Amazon Prime', value: 39.3, color: '#2563EB' },
-    { name: 'Disney+', value: 5.9, color: '#8B5CF6' }
-  ];
+            // platformData
+            const aggregatedPlatformData = platforms.map(platform => {
+              const platformRows = data.filter(row => row.platform === platform);
+              const avg = (key) => {
+                const values = platformRows.map(row => parseFloat(row[key])).filter(v => !isNaN(v));
+                return values.length ? (values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(2) : 0;
+              };
+              return {
+                platform,
+                totalShows: parseInt(avg('totalShows')),
+                movies: parseInt(avg('movies')),
+                series: parseInt(avg('series')),
+                subscribers: parseFloat(avg('subscribers_mil')),
+                revenue: parseFloat(avg('revenue_bil')),
+                color: colors[platform],
+              };
+            });
+            setPlatformData(aggregatedPlatformData);
 
-  const yearlyGrowth = [
-    { year: 2019, Netflix: 8500, Amazon: 6500, Disney: 500 },
-    { year: 2020, Netflix: 11000, Amazon: 8000, Disney: 900 },
-    { year: 2021, Netflix: 13500, Amazon: 9684, Disney: 1450 },
-    { year: 2022, Netflix: 15000, Amazon: 11000, Disney: 1800 },
-    { year: 2023, Netflix: 16500, Amazon: 12500, Disney: 2200 }
-  ];
+            // genreComparison
+            const genres = [...new Set(data.map(row => row.genre))];
+            const genreData = genres.map(genre => ({
+              genre,
+              Netflix: parseInt(data.find(row => row.platform === 'Netflix' && row.genre === genre)?.genre_count || 0),
+              Amazon: parseInt(data.find(row => row.platform === 'Amazon Prime' && row.genre === genre)?.genre_count || 0),
+              Disney: parseInt(data.find(row => row.platform === 'Disney+' && row.genre === genre)?.genre_count || 0),
+            }));
+            setGenreComparison(genreData);
 
-  const contentQuality = [
-    { platform: 'Netflix', originalContent: 85, userRating: 8.2, criticalAcclaim: 72, globalReach: 95, contentDiversity: 88 },
-    { platform: 'Amazon Prime', originalContent: 78, userRating: 7.8, criticalAcclaim: 75, globalReach: 87, contentDiversity: 92 },
-    { platform: 'Disney+', originalContent: 92, userRating: 8.5, criticalAcclaim: 85, globalReach: 82, contentDiversity: 65 }
-  ];
+            // marketShare
+            const marketShareData = platforms.map(platform => {
+              const platformRows = data.filter(row => row.platform === platform);
+              const avgMarketShare = platformRows.map(row => parseFloat(row.market_share_pct)).filter(v => !isNaN(v)).reduce((sum, v) => sum + v, 0) / platformRows.length;
+              return { name: platform, value: parseFloat(avgMarketShare.toFixed(2)), color: colors[platform] };
+            });
+            const totalMarketShare = marketShareData.reduce((sum, d) => sum + d.value, 0);
+            const normalizedMarketShare = marketShareData.map(d => ({
+              ...d,
+              value: parseFloat(((d.value / totalMarketShare) * 100).toFixed(2)),
+            }));
+            setMarketShare(normalizedMarketShare);
 
-  const userEngagement = [
-    { platform: 'Netflix', dailyActiveUsers: 85, avgWatchTime: 3.2, retention: 92, satisfaction: 4.2 },
-    { platform: 'Amazon Prime', dailyActiveUsers: 67, avgWatchTime: 2.8, retention: 88, satisfaction: 4.0 },
-    { platform: 'Disney+', dailyActiveUsers: 78, avgWatchTime: 2.5, retention: 95, satisfaction: 4.5 }
-  ];
+            // yearlyGrowth (assuming 2023 for yearly_growth_count)
+            const yearlyGrowthData = [
+              { year: 2019, Netflix: 8500, Amazon: 6500, Disney: 500 },
+              { year: 2020, Netflix: 11000, Amazon: 8000, Disney: 900 },
+              { year: 2021, Netflix: 13500, Amazon: 9684, Disney: 1450 },
+              { year: 2022, Netflix: 15000, Amazon: 11000, Disney: 1800 },
+              {
+                year: 2023,
+                Netflix: parseInt(data.filter(row => row.platform === 'Netflix').reduce((sum, row) => sum + parseFloat(row.yearly_growth_count || 0), 0) / data.filter(row => row.platform === 'Netflix').length),
+                Amazon: parseInt(data.filter(row => row.platform === 'Amazon Prime').reduce((sum, row) => sum + parseFloat(row.yearly_growth_count || 0), 0) / data.filter(row => row.platform === 'Amazon Prime').length),
+                Disney: parseInt(data.filter(row => row.platform === 'Disney+').reduce((sum, row) => sum + parseFloat(row.yearly_growth_count || 0), 0) / data.filter(row => row.platform === 'Disney+').length),
+              },
+            ];
+            setYearlyGrowth(yearlyGrowthData);
 
-  const revenueData = [
-    { year: 2019, Netflix: 20.2, Amazon: 14.5, Disney: 0 },
-    { year: 2020, Netflix: 25.0, Amazon: 19.2, Disney: 2.8 },
-    { year: 2021, Netflix: 29.7, Amazon: 22.1, Disney: 5.5 },
-    { year: 2022, Netflix: 31.6, Amazon: 25.0, Disney: 7.4 },
-    { year: 2023, Netflix: 33.7, Amazon: 27.8, Disney: 8.9 }
-  ];
+            // contentQuality
+            const contentQualityData = platforms.map(platform => {
+              const platformRows = data.filter(row => row.platform === platform);
+              const avg = (key) => {
+                const values = platformRows.map(row => parseFloat(row[key])).filter(v => !isNaN(v));
+                return values.length ? (values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(2) : 0;
+              };
+              return {
+                platform,
+                originalContent: parseFloat(avg('originalContent_pct')),
+                userRating: parseFloat(avg('userRating')),
+                criticalAcclaim: parseFloat(avg('criticalAcclaim_pct')),
+                globalReach: parseFloat(avg('globalReach_pct')),
+                contentDiversity: parseFloat(avg('contentDiversity_pct')),
+              };
+            });
+            setContentQuality(contentQualityData);
 
-  const demographicsData = [
-    { ageGroup: '18-24', Netflix: 23, Amazon: 18, Disney: 15 },
-    { ageGroup: '25-34', Netflix: 32, Amazon: 28, Disney: 25 },
-    { ageGroup: '35-44', Netflix: 28, Amazon: 31, Disney: 35 },
-    { ageGroup: '45-54', Netflix: 12, Amazon: 16, Disney: 18 },
-    { ageGroup: '55+', Netflix: 5, Amazon: 7, Disney: 7 }
-  ];
+            // userEngagement
+            const userEngagementData = platforms.map(platform => {
+              const platformRows = data.filter(row => row.platform === platform);
+              const avg = (key) => {
+                const values = platformRows.map(row => parseFloat(row[key])).filter(v => !isNaN(v));
+                return values.length ? (values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(2) : 0;
+              };
+              return {
+                platform,
+                dailyActiveUsers: parseFloat(avg('dailyActiveUsers_mil')),
+                avgWatchTime: parseFloat(avg('avgWatchTime_hrs')),
+                retention: parseFloat(avg('retention_pct')),
+                satisfaction: parseFloat(avg('satisfaction_rating')),
+              };
+            });
+            setUserEngagement(userEngagementData);
 
-  // Platform ratings by country for map visualization
-  const platformRatingsByCountry = [
-    { country: 'United States', Netflix: 8.5, Amazon: 8.2, Disney: 8.7, subscribers: 75000000 },
-    { country: 'United Kingdom', Netflix: 8.3, Amazon: 8.0, Disney: 8.6, subscribers: 15000000 },
-    { country: 'Canada', Netflix: 8.4, Amazon: 7.9, Disney: 8.5, subscribers: 8000000 },
-    { country: 'Germany', Netflix: 8.1, Amazon: 8.1, Disney: 8.3, subscribers: 12000000 },
-    { country: 'France', Netflix: 7.9, Amazon: 7.8, Disney: 8.4, subscribers: 9000000 },
-    { country: 'Japan', Netflix: 8.0, Amazon: 7.7, Disney: 8.8, subscribers: 6000000 },
-    { country: 'Australia', Netflix: 8.2, Amazon: 7.8, Disney: 8.2, subscribers: 4000000 },
-    { country: 'Brazil', Netflix: 8.3, Amazon: 7.6, Disney: 8.1, subscribers: 18000000 },
-    { country: 'India', Netflix: 7.8, Amazon: 8.3, Disney: 7.9, subscribers: 25000000 },
-    { country: 'South Korea', Netflix: 8.6, Amazon: 7.5, Disney: 8.0, subscribers: 3000000 }
-  ];
+            // revenueData (assuming 2023 for revenue_bil)
+            const revenueData = [
+              { year: 2019, Netflix: 20.2, Amazon: 14.5, Disney: 0 },
+              { year: 2020, Netflix: 25.0, Amazon: 19.2, Disney: 2.8 },
+              { year: 2021, Netflix: 29.7, Amazon: 22.1, Disney: 5.5 },
+              { year: 2022, Netflix: 31.6, Amazon: 25.0, Disney: 7.4 },
+              {
+                year: 2023,
+                Netflix: parseFloat(data.filter(row => row.platform === 'Netflix').reduce((sum, row) => sum + parseFloat(row.revenue_bil || 0), 0) / data.filter(row => row.platform === 'Netflix').length).toFixed(2),
+                Amazon: parseFloat(data.filter(row => row.platform === 'Amazon Prime').reduce((sum, row) => sum + parseFloat(row.revenue_bil || 0), 0) / data.filter(row => row.platform === 'Amazon Prime').length).toFixed(2),
+                Disney: parseFloat(data.filter(row => row.platform === 'Disney+').reduce((sum, row) => sum + parseFloat(row.revenue_bil || 0), 0) / data.filter(row => row.platform === 'Disney+').length).toFixed(2),
+              },
+            ];
+            setRevenueData(revenueData);
 
-  // New data for additional charts
-  const contentProductionCost = [
-    { platform: 'Netflix', avgBudget: 8.5, originalBudget: 12.2, totalSpend: 17.3 },
-    { platform: 'Amazon Prime', avgBudget: 9.2, originalBudget: 14.5, totalSpend: 13.7 },
-    { platform: 'Disney+', avgBudget: 15.8, originalBudget: 28.4, totalSpend: 8.9 }
-  ];
+            // demographicsData
+            const ageGroups = [...new Set(data.map(row => row.ageGroup))];
+            const demographicsData = ageGroups.map(ageGroup => ({
+              ageGroup,
+              Netflix: parseFloat(data.find(row => row.platform === 'Netflix' && row.ageGroup === ageGroup)?.ageGroup_pct || 0),
+              Amazon: parseFloat(data.find(row => row.platform === 'Amazon Prime' && row.ageGroup === ageGroup)?.ageGroup_pct || 0),
+              Disney: parseFloat(data.find(row => row.platform === 'Disney+' && row.ageGroup === ageGroup)?.ageGroup_pct || 0),
+            }));
+            setDemographicsData(demographicsData);
 
-  const contentReleaseSchedule = [
-    { month: 'Jan', Netflix: 45, Amazon: 32, Disney: 8 },
-    { month: 'Feb', Netflix: 38, Amazon: 28, Disney: 12 },
-    { month: 'Mar', Netflix: 52, Amazon: 35, Disney: 15 },
-    { month: 'Apr', Netflix: 41, Amazon: 30, Disney: 9 },
-    { month: 'May', Netflix: 48, Amazon: 33, Disney: 18 },
-    { month: 'Jun', Netflix: 44, Amazon: 29, Disney: 11 },
-    { month: 'Jul', Netflix: 39, Amazon: 31, Disney: 14 },
-    { month: 'Aug', Netflix: 46, Amazon: 34, Disney: 16 },
-    { month: 'Sep', Netflix: 43, Amazon: 27, Disney: 13 },
-    { month: 'Oct', Netflix: 50, Amazon: 36, Disney: 20 },
-    { month: 'Nov', Netflix: 47, Amazon: 32, Disney: 17 },
-    { month: 'Dec', Netflix: 49, Amazon: 38, Disney: 22 }
-  ];
+            // platformRatingsByCountry
+            const countries = [...new Set(data.map(row => row.country))];
+            const ratingsByCountry = countries.map(country => ({
+              country,
+              Netflix: parseFloat(data.find(row => row.platform === 'Netflix' && row.country === country)?.country_rating || 0),
+              Amazon: parseFloat(data.find(row => row.platform === 'Amazon Prime' && row.country === country)?.country_rating || 0),
+              Disney: parseFloat(data.find(row => row.platform === 'Disney+' && row.country === country)?.country_rating || 0),
+              subscribers: parseInt(data.find(row => row.country === country)?.country_subscribers || 0),
+            }));
+            setPlatformRatingsByCountry(ratingsByCountry);
 
-  const avgWatchTimeByGenre = [
-    { genre: 'Drama', Netflix: 58, Amazon: 52, Disney: 48 },
-    { genre: 'Action', Netflix: 45, Amazon: 47, Disney: 43 },
-    { genre: 'Comedy', Netflix: 32, Amazon: 28, Disney: 35 },
-    { genre: 'Documentary', Netflix: 67, Amazon: 72, Disney: 65 },
-    { genre: 'Animation', Netflix: 38, Amazon: 35, Disney: 55 },
-    { genre: 'Horror', Netflix: 41, Amazon: 39, Disney: 30 }
-  ];
+            // contentProductionCost
+            const productionCostData = platforms.map(platform => {
+              const platformRows = data.filter(row => row.platform === platform);
+              const avg = (key) => {
+                const values = platformRows.map(row => parseFloat(row[key])).filter(v => !isNaN(v));
+                return values.length ? (values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(2) : 0;
+              };
+              return {
+                platform,
+                avgBudget: parseFloat(avg('avgBudget_mil')),
+                originalBudget: parseFloat(avg('originalBudget_mil')),
+                totalSpend: parseFloat(avg('totalSpend_bil')),
+              };
+            });
+            setContentProductionCost(productionCostData);
+
+            // contentReleaseSchedule
+            const months = [...new Set(data.map(row => row.month))];
+            const releaseSchedule = months.map(month => ({
+              month,
+              Netflix: parseInt(data.find(row => row.platform === 'Netflix' && row.month === month)?.monthly_releases || 0),
+              Amazon: parseInt(data.find(row => row.platform === 'Amazon Prime' && row.month === month)?.monthly_releases || 0),
+              Disney: parseInt(data.find(row => row.platform === 'Disney+' && row.month === month)?.monthly_releases || 0),
+            }));
+            setContentReleaseSchedule(releaseSchedule);
+
+            // avgWatchTimeByGenre
+            const watchTimeByGenre = genres.map(genre => ({
+              genre,
+              Netflix: parseFloat(data.find(row => row.platform === 'Netflix' && row.genre === genre)?.avgWatchTimeByGenre_mins || 0),
+              Amazon: parseFloat(data.find(row => row.platform === 'Amazon Prime' && row.genre === genre)?.avgWatchTimeByGenre_mins || 0),
+              Disney: parseFloat(data.find(row => row.platform === 'Disney+' && row.genre === genre)?.avgWatchTimeByGenre_mins || 0),
+            }));
+            setAvgWatchTimeByGenre(watchTimeByGenre);
+          },
+          error: (error) => {
+            console.error('Error parsing CSV:', error);
+          },
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching CSV:', error);
+      });
+  }, []);
 
   // Filter data based on selections
   const getFilteredData = () => {
@@ -137,6 +235,7 @@ const ComparisonDashboard = () => {
     return filteredGenreData;
   };
 
+  // Rest of the JSX remains the same, using the dynamic state variables
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -180,17 +279,13 @@ const ComparisonDashboard = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
                   <SelectItem value="all">All Genres</SelectItem>
-                  <SelectItem value="action">Action</SelectItem>
-                  <SelectItem value="comedy">Comedy</SelectItem>
-                  <SelectItem value="drama">Drama</SelectItem>
-                  <SelectItem value="animation">Animation</SelectItem>
-                  <SelectItem value="documentary">Documentary</SelectItem>
-                  <SelectItem value="horror">Horror</SelectItem>
-                  <SelectItem value="romance">Romance</SelectItem>
+                  {[...new Set(genreComparison.map(item => item.genre))].map(genre => (
+                    <SelectItem key={genre} value={genre.toLowerCase()}>{genre}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            
+            {/* Other filter controls remain the same */}
             <div>
               <label className="text-gray-400 text-sm mb-2 block">Year Filter</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -207,7 +302,6 @@ const ComparisonDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-gray-400 text-sm mb-2 block">Primary Metric</label>
               <Select value={selectedMetric} onValueChange={setSelectedMetric}>
@@ -222,7 +316,6 @@ const ComparisonDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-gray-400 text-sm mb-2 block">Region</label>
               <Select value={selectedRegion} onValueChange={setSelectedRegion}>
@@ -238,7 +331,6 @@ const ComparisonDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-gray-400 text-sm mb-2 block">Content Rating</label>
               <Select value={selectedRating} onValueChange={setSelectedRating}>
@@ -255,7 +347,6 @@ const ComparisonDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-gray-400 text-sm mb-2 block">Content Type</label>
               <Select value={selectedContentType} onValueChange={setSelectedContentType}>
@@ -271,7 +362,6 @@ const ComparisonDashboard = () => {
               </Select>
             </div>
           </div>
-          
           <div className="flex justify-center mt-4">
             <Button 
               onClick={() => {
@@ -372,18 +462,12 @@ const ComparisonDashboard = () => {
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center space-x-4 mt-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-600"></div>
-                <span className="text-gray-300 text-sm">Netflix</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                <span className="text-gray-300 text-sm">Amazon Prime</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                <span className="text-gray-300 text-sm">Disney+</span>
-              </div>
+              {marketShare.map((entry, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                  <span className="text-gray-300 text-sm">{entry.name}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -492,7 +576,7 @@ const ComparisonDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* New Charts Row - Content Production Analysis */}
+      {/* Content Production Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Production Budget */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -588,7 +672,7 @@ const ComparisonDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Charts Grid - Row 2 */}
+      {/* Revenue and Demographics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Comparison */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -673,7 +757,7 @@ const ComparisonDashboard = () => {
         </Card>
       </div>
 
-      {/* Genre Comparison - Apply filters */}
+      {/* Genre Comparison */}
       <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white">
@@ -732,7 +816,7 @@ const ComparisonDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Charts Grid - Row 3 */}
+      {/* Content Quality and Engagement */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Quality Radar */}
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -754,13 +838,22 @@ const ComparisonDashboard = () => {
           <CardContent>
             <div style={{ transform: `scale(${qualityZoom})`, transformOrigin: 'center' }}>
               <ResponsiveContainer width="100%" height={350}>
-                <RadarChart data={[
-                  { metric: 'Original Content', Netflix: 85, Amazon: 78, Disney: 92 },
-                  { metric: 'User Rating', Netflix: 82, Amazon: 78, Disney: 85 },
-                  { metric: 'Critical Acclaim', Netflix: 72, Amazon: 75, Disney: 85 },
-                  { metric: 'Global Reach', Netflix: 95, Amazon: 87, Disney: 82 },
-                  { metric: 'Content Diversity', Netflix: 88, Amazon: 92, Disney: 65 }
-                ]}>
+                <RadarChart data={contentQuality.map(item => ({
+                  metric: 'Original Content', Netflix: contentQuality.find(p => p.platform === 'Netflix')?.originalContent || 0, Amazon: contentQuality.find(p => p.platform === 'Amazon Prime')?.originalContent || 0, Disney: contentQuality.find(p => p.platform === 'Disney+')?.originalContent || 0
+                })).concat(
+                  contentQuality.map(item => ({
+                    metric: 'User Rating', Netflix: contentQuality.find(p => p.platform === 'Netflix')?.userRating || 0, Amazon: contentQuality.find(p => p.platform === 'Amazon Prime')?.userRating || 0, Disney: contentQuality.find(p => p.platform === 'Disney+')?.userRating || 0
+                  }),
+                  contentQuality.map(item => ({
+                    metric: 'Critical Acclaim', Netflix: contentQuality.find(p => p.platform === 'Netflix')?.criticalAcclaim || 0, Amazon: contentQuality.find(p => p.platform === 'Amazon Prime')?.criticalAcclaim || 0, Disney: contentQuality.find(p => p.platform === 'Disney+')?.criticalAcclaim || 0
+                  }),
+                  contentQuality.map(item => ({
+                    metric: 'Global Reach', Netflix: contentQuality.find(p => p.platform === 'Netflix')?.globalReach || 0, Amazon: contentQuality.find(p => p.platform === 'Amazon Prime')?.globalReach || 0, Disney: contentQuality.find(p => p.platform === 'Disney+')?.globalReach || 0
+                  }),
+                  contentQuality.map(item => ({
+                    metric: 'Content Diversity', Netflix: contentQuality.find(p => p.platform === 'Netflix')?.contentDiversity || 0, Amazon: contentQuality.find(p => p.platform === 'Amazon Prime')?.contentDiversity || 0, Disney: contentQuality.find(p => p.platform === 'Disney+')?.contentDiversity || 0
+                  }))
+                )}>
                   <PolarGrid stroke="#374151" />
                   <PolarAngleAxis dataKey="metric" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
                   <PolarRadiusAxis angle={0} domain={[0, 100]} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
@@ -811,9 +904,13 @@ const ComparisonDashboard = () => {
                     }} 
                     cursor={{ strokeDasharray: '3 3' }}
                   />
-                  <Scatter name="Netflix" data={[{ dailyActiveUsers: 85, satisfaction: 4.2, platform: 'Netflix' }]} fill="#DC2626" />
-                  <Scatter name="Amazon" data={[{ dailyActiveUsers: 67, satisfaction: 4.0, platform: 'Amazon Prime' }]} fill="#2563EB" />
-                  <Scatter name="Disney" data={[{ dailyActiveUsers: 78, satisfaction: 4.5, platform: 'Disney+' }]} fill="#8B5CF6" />
+                  {userEngagement.map((entry, index) => (
+                    <Scatter key={index} name={entry.platform} data={[{
+                      dailyActiveUsers: entry.dailyActiveUsers,
+                      satisfaction: entry.satisfaction,
+                      platform: entry.platform,
+                    }]} fill={colors[entry.platform]} />
+                  ))}
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
