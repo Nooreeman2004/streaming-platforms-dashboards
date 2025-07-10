@@ -63,12 +63,9 @@ const AmazonDashboard: React.FC = () => {
           console.log('Parsed row:', parsedShow); // Log each parsed row
           return parsedShow;
         });
-        console.log('Parsed data length:', parsedData.length);
-        if (parsedData.length === 0) {
-          throw new Error('No data parsed from CSV. Check column names and data format.');
-        }
-        setAmazonShows(parsedData);
-        setLoading(false);
+    
+    
+      
       } catch (err) {
         console.error('Error fetching or parsing CSV:', err);
         setError(`Failed to load data: ${err.message}. Ensure the CSV is in /data/amazon_prime_titles.csv and has the correct format.`);
